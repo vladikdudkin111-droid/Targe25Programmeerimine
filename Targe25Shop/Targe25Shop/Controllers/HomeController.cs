@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
-using Targe25Shop.Models;
+using TARge25Shop.Models;
 
-namespace Targe25Shop.Controllers
+namespace TARge25Shop.Controllers
 {
     public class HomeController : Controller
     {

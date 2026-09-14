@@ -1,0 +1,56 @@
+@model IEnumerable<TARge25Shop.Models.Spaceship.SpaceshipIndexViewModel>
+@{
+    // Lehe pealkiri brauseris.
+    ViewData["Title"] = "Spaceships";
+
+    // Loendur tabeli ridade nummerdamiseks: 1, 2, 3 jne.
+    var nr = 1;
+}
+
+@* Nupp uue kosmoselaeva loomise lehele liikumiseks. *@
+<div class="mb-3">
+    <a asp-action="Create" asp-controller="Spaceship" class="btn btn-primary">Create</a>
+</div>
+
+<h1>Spaceships</h1>
+
+@* Tabel kuvab kõik andmebaasist saadud kosmoselaevad. *@
+<table class="table table-hover align-middle">
+    <thead>
+        <tr>
+            <th scope="col">Nr</th>
+            <th scope="col">Name</th>
+            <th scope="col">Type</th>
+            <th scope="col">Built Date</th>
+            <th scope="col">Crew</th>
+            <th scope="col">Engine Power</th>
+            <th scope="col"></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var spaceship in Model)
+        {
+            <tr>
+                @* nr++ kuvab praeguse numbri ja suurendab seda järgmise rea jaoks. *@
+                <td>@(nr++)</td>
+                <td>@spaceship.Name</td>
+                <td>@spaceship.ShipType</td>
+                <td>@spaceship.CreatedAt.ToString("dd.MM.yyyy HH:mm")</td>
+                <td>@spaceship.Crew</td>
+                <td>@spaceship.EnginePower</td>
+                <td class="text-nowrap">
+                    @* Iga nupp saadab valitud kosmoselaeva ID vastavale Controlleri actionile. *@
+                    <a asp-action="Details" asp-controller="Spaceship" asp-route-id="@spaceship.Id" class="btn btn-primary btn-sm">Details</a>
+                    <a asp-action="Update" asp-controller="Spaceship" asp-route-id="@spaceship.Id" class="btn btn-primary btn-sm">Update</a>
+                    <a asp-action="Delete" asp-controller="Spaceship" asp-route-id="@spaceship.Id" class="btn btn-outline-danger btn-sm">Delete</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@* Kui nimekiri on tühi, näitame kasutajale infoteadet. *@
+@if (!Model.Any())
+{
+    <div class="alert alert-info">No spaceships have been created yet.</div>
+}

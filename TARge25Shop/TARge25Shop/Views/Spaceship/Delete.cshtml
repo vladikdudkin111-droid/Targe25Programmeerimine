@@ -1,0 +1,33 @@
+@model TARge25Shop.Models.Spaceship.SpaceshipIndexViewModel
+@{
+    // Lehe pealkiri brauseris.
+    ViewData["Title"] = "Delete spaceship";
+}
+
+<h1>Delete spaceship</h1>
+
+@* Enne kustutamist küsime kasutajalt kinnitust. *@
+<div class="alert alert-warning">
+    Are you sure you want to delete <strong>@Model.Name</strong>?
+</div>
+
+@* Kuvame kustutatava kosmoselaeva põhiandmed, et kasutaja saaks valikut kontrollida. *@
+<dl class="row">
+    <dt class="col-sm-3">Ship type</dt>
+    <dd class="col-sm-9">@Model.ShipType</dd>
+
+    <dt class="col-sm-3">Crew</dt>
+    <dd class="col-sm-9">@Model.Crew</dd>
+
+    <dt class="col-sm-3">Engine power</dt>
+    <dd class="col-sm-9">@Model.EnginePower</dd>
+</dl>
+
+@* POST vorm saadab kustutatava kirje ID Controllerisse. *@
+<form asp-action="Delete" asp-controller="Spaceship" method="post">
+    <input asp-for="Id" type="hidden" />
+
+    @* Delete kinnitab kustutamise, Cancel viib tagasi nimekirja. *@
+    <button type="submit" class="btn btn-danger">Delete</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+</form>

@@ -1,0 +1,33 @@
+@model TARge25Shop.Models.Spaceship.SpaceshipIndexViewModel
+@{
+    // Lehe pealkiri brauseris.
+    ViewData["Title"] = "Spaceship details";
+}
+
+<h1>Spaceship details</h1>
+
+@* Kuvame valitud kosmoselaeva kõik põhiandmed. *@
+<dl class="row">
+    <dt class="col-sm-3">Name</dt>
+    <dd class="col-sm-9">@Model.Name</dd>
+
+    <dt class="col-sm-3">Ship type</dt>
+    <dd class="col-sm-9">@Model.ShipType</dd>
+
+    <dt class="col-sm-3">Crew</dt>
+    <dd class="col-sm-9">@Model.Crew</dd>
+
+    <dt class="col-sm-3">Engine power</dt>
+    <dd class="col-sm-9">@Model.EnginePower</dd>
+
+    <dt class="col-sm-3">Created</dt>
+    <dd class="col-sm-9">@Model.CreatedAt.ToString("dd.MM.yyyy HH:mm")</dd>
+
+    <dt class="col-sm-3">Updated</dt>
+    <dd class="col-sm-9">@Model.UpdatedAt.ToString("dd.MM.yyyy HH:mm")</dd>
+</dl>
+
+@* Nupud võimaldavad sama kirjet muuta, kustutada või minna tagasi nimekirja. *@
+<a asp-action="Update" asp-route-id="@Model.Id" class="btn btn-primary">Update</a>
+<a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-outline-danger">Delete</a>
+<a asp-action="Index" class="btn btn-secondary">Back to list</a>
