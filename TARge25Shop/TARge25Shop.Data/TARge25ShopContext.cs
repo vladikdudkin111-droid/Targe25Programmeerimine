@@ -14,5 +14,8 @@ namespace TARge25Shop.Data
 
         // DbSet esindab andmebaasis Spaceships tabelit.
         public DbSet<Spaceship> Spaceships { get; set; } = null!;
+
+        // DbSet esindab andmebaasis Kindergartens tabelit.
+        public DbSet<Kindergarten> Kindergartens { get; set; } = null!;
     }
 }

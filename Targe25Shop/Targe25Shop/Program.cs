@@ -19,6 +19,9 @@ namespace TARge25Shop
             // Kui Controller küsib ISpaceshipServices, antakse talle SpaceshipServices objekt.
             builder.Services.AddScoped<ISpaceshipServices, SpaceshipServices>();
 
+            // Registreerime lasteaiarühmade teenuse.
+            builder.Services.AddScoped<IKindergartenServices, KindergartenServices>();
+
             // Registreerime Entity Framework DbContexti ja SQL Server ühenduse.
             // Connection string loetakse appsettings.json failist nimega DefaultConnection.
             builder.Services.AddDbContext<TARge25ShopContext>(options =>
