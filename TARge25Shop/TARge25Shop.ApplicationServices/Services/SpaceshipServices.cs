@@ -11,10 +11,14 @@ namespace TARge25Shop.ApplicationServices.Services
         // DbContext annab ligipääsu andmebaasi tabelitele.
         private readonly TARge25ShopContext _context;
 
+        // Failiteenus salvestab ja kustutab kosmoselaevaga seotud faile.
+        private readonly IFileServices _fileServices;
+
         // Constructor saab DbContexti dependency injection kaudu.
-        public SpaceshipServices(TARge25ShopContext context)
+        public SpaceshipServices(TARge25ShopContext context, IFileServices fileServices)
         {
             _context = context;
+            _fileServices = fileServices;
         }
 
         // CREATE - loob uue kosmoselaeva ja salvestab selle andmebaasi.
@@ -35,6 +39,9 @@ namespace TARge25Shop.ApplicationServices.Services
             // Lisame uue objekti DbSeti ja salvestame muudatused andmebaasi.
             _context.Spaceships.Add(spaceShip);
             await _context.SaveChangesAsync();
+
+            // Salvestame valitud failid kettale ja FileToApis tabelisse.
+            _fileServices.FilesToApi(dto, spaceShip);
 
             // Tagastame loodud kosmoselaeva.
             return spaceShip;
@@ -62,6 +69,10 @@ namespace TARge25Shop.ApplicationServices.Services
             // Salvestame muudatused andmebaasi.
             await _context.SaveChangesAsync();
 
+            // Kustutame märgitud failid ja salvestame juurde lisatud uued failid.
+            _fileServices.DeleteFilesFromApi(spaceShip.Id, dto.FileNamesToDelete);
+            _fileServices.FilesToApi(dto, spaceShip);
+
             // Tagastame uuendatud kosmoselaeva.
             return spaceShip;
         }
@@ -69,7 +80,6 @@ namespace TARge25Shop.ApplicationServices.Services
         // DETAILS - otsib ja tagastab ühe kosmoselaeva ID järgi.
         public async Task<Spaceship?> DetailAsync(Guid id)
         {
-            // FindAsync tagastab objekti või null, kui kirjet ei leitud.
             return await _context.Spaceships.FindAsync(id);
         }
 
@@ -88,6 +98,9 @@ namespace TARge25Shop.ApplicationServices.Services
             // Eemaldame objekti DbSetist ja salvestame muudatuse andmebaasi.
             _context.Spaceships.Remove(spaceShip);
             await _context.SaveChangesAsync();
+
+            // Kustutame kosmoselaevaga seotud füüsilised failid ja FileToApi kirjed.
+            _fileServices.DeleteDirectoryFromApi(spaceShip.Id);
 
             // Tagastame kustutatud objekti.
             return spaceShip;

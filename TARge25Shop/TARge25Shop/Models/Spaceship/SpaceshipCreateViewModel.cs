@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Http;
 
 namespace TARge25Shop.Models.Spaceship
 {
@@ -24,5 +25,9 @@ namespace TARge25Shop.Models.Spaceship
         [Display(Name = "Engine power")]
         [Range(0, int.MaxValue)]
         public int EnginePower { get; set; }
+
+        // Files sisaldab loomise vormil valitud üleslaaditavaid faile.
+        [Display(Name = "Files")]
+        public List<IFormFile> Files { get; set; } = new();
     }
 }

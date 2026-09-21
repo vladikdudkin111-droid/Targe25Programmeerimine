@@ -1,4 +1,4 @@
-@model TARge25Shop.Models.Spaceship.SpaceshipIndexViewModel
+@model TARge25Shop.Models.Spaceship.SpaceshipDeleteViewModel
 @{
     // Lehe pealkiri brauseris.
     ViewData["Title"] = "Delete spaceship";
@@ -21,6 +21,9 @@
 
     <dt class="col-sm-3">Engine power</dt>
     <dd class="col-sm-9">@Model.EnginePower</dd>
+
+    <dt class="col-sm-3">Files</dt>
+    <dd class="col-sm-9">@Model.ImageCount</dd>
 </dl>
 
 @* POST vorm saadab kustutatava kirje ID Controllerisse. *@

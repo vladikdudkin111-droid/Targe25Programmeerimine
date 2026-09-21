@@ -3,22 +3,24 @@ using Microsoft.AspNetCore.Http;
 
 namespace TARge25Shop.Models.Spaceship
 {
-    // ViewModel sisaldab välju, mida kasutaja saab Update vormis muuta.
-    public class SpaceshipUpdateViewModel
+    // Sama ViewModel teenindab nii kosmoselaeva loomise kui ka muutmise vormi.
+    public class SpaceshipCreateUpdateViewModel
     {
-        // ID hoiab alles, millist kosmoselaeva me muudame.
-        public Guid Id { get; set; }
+        // Tühi Id tähendab loomist; olemasolev Id tähendab kirje muutmist.
+        public Guid? Id { get; set; }
 
-        // Nimi peab olema täidetud.
+        // Nimi on kohustuslik ja võib olla kuni 100 märki pikk.
         [Required]
+        [StringLength(100)]
         public string Name { get; set; } = string.Empty;
 
-        // Kosmoselaeva tüüp peab olema täidetud.
+        // Kosmoselaeva tüüp on kohustuslik ja võib olla kuni 100 märki pikk.
         [Required]
         [Display(Name = "Ship type")]
+        [StringLength(100)]
         public string ShipType { get; set; } = string.Empty;
 
-        // Meeskonna arv ei tohi olla negatiivne.
+        // Meeskonnaliikmete arv ei tohi olla negatiivne.
         [Range(0, int.MaxValue)]
         public int Crew { get; set; }
 
@@ -27,12 +29,12 @@ namespace TARge25Shop.Models.Spaceship
         [Range(0, int.MaxValue)]
         public int EnginePower { get; set; }
 
-        // Files sisaldab muutmise vormil lisatud uusi faile.
-        [Display(Name = "Add files")]
+        // Files sisaldab vormil valitud uusi üleslaaditavaid faile.
+        [Display(Name = "Files")]
         public List<IFormFile> Files { get; set; } = new();
 
-        // ExistingFiles sisaldab kosmoselaevaga juba seotud failide nimekirja.
-        public List<SpaceshipFileViewModel> ExistingFiles { get; set; } = new();
+        // ExistingImages sisaldab muutmisel juba salvestatud failide nimekirja.
+        public List<ImageViewModel> ExistingImages { get; set; } = new();
 
         // FileNamesToDelete sisaldab kasutaja kustutamiseks märgitud failinimesid.
         public List<string> FileNamesToDelete { get; set; } = new();

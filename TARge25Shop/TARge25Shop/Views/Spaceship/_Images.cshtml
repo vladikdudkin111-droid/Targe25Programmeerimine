@@ -1,0 +1,16 @@
+@model TARge25Shop.Models.Spaceship.ImageViewModel
+
+@{
+    // Koostame wwwroot kaustas oleva pildi veebiaadressi õpetaja näite järgi.
+    // Kui FilePath puudub, proovime kuvada vaikimisi noimage.jpg faili.
+    var photoPaths = "~/multipleFileUpload/" + (Model.FilePath ?? "noimage.jpg");
+}
+
+@* Osaline vaade kuvab ühe kosmoselaevaga seotud pildi. *@
+<div class="form-group row col-sm-4 offset-2">
+    @* Failinimi aitab arendajal kontrollida, milline pilt parajasti kuvatakse. *@
+    <div>@Model.FilePath</div>
+
+    @* asp-append-version lisab URL-ile faili versiooni ja väldib vana brauseri vahemälu. *@
+    <img class="card-image-top" src="@photoPaths" asp-append-version="true" alt="@Model.FileName" />
+</div>

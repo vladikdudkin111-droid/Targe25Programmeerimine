@@ -1,17 +1,23 @@
-@model TARge25Shop.Models.Spaceship.SpaceshipUpdateViewModel
+@model TARge25Shop.Models.Spaceship.SpaceshipCreateUpdateViewModel
 @{
-    // Lehe pealkiri brauseris.
-    ViewData["Title"] = "Update spaceship";
+    // Id olemasolu määrab, kas vaade töötab loomise või muutmise režiimis.
+    var isUpdate = Model.Id.HasValue && Model.Id.Value != Guid.Empty;
+
+    // Sama pealkiri muutub automaatselt vastavalt vormi töörežiimile.
+    ViewData["Title"] = isUpdate ? "Update spaceship" : "Create spaceship";
 }
 
-<h1>Update spaceship</h1>
+<h1>@ViewData["Title"]</h1>
 
-@* Vorm saadab muudetud andmed SpaceshipControlleri Update POST actionile. *@
-<form asp-action="Update" asp-controller="Spaceship" method="post" enctype="multipart/form-data">
-    @* ID on peidetud väli, et Controller teaks, millist kirjet muuta. *@
-    <input asp-for="Id" type="hidden" />
+@* Ühine vorm saadab nii loomise kui ka muutmise andmed CreateUpdate POST actionile. *@
+<form asp-action="CreateUpdate" asp-controller="Spaceship" method="post" enctype="multipart/form-data">
+    @* Muutmise korral saadame peidetud väljal olemasoleva kosmoselaeva ID. *@
+    @if (isUpdate)
+    {
+        <input asp-for="Id" type="hidden" />
+    }
 
-    @* Siin kuvatakse üldised valideerimisvead. *@
+    @* Siin kuvatakse kõik vormi üldised valideerimisvead. *@
     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
     @* Kosmoselaeva nimi. *@
@@ -28,7 +34,7 @@
         <span asp-validation-for="ShipType" class="text-danger"></span>
     </div>
 
-    @* Meeskonna liikmete arv. *@
+    @* Meeskonnaliikmete arv. *@
     <div class="mb-3">
         <label asp-for="Crew" class="form-label"></label>
         <input asp-for="Crew" class="form-control" />
@@ -42,26 +48,27 @@
         <span asp-validation-for="EnginePower" class="text-danger"></span>
     </div>
 
-    @if (Model.ExistingFiles.Count > 0)
+    @* Olemasolevaid faile näitame ainult muutmise režiimis. *@
+    @if (Model.ExistingImages.Count > 0)
     {
-        @* Olemasolevate failide märkeruudud võimaldavad valida kustutatavad failid. *@
         <fieldset class="mb-3">
             <legend class="fs-6">Existing files</legend>
-            @foreach (var file in Model.ExistingFiles)
+            @foreach (var image in Model.ExistingImages)
             {
+                @* Märkeruut lisab valitud failinime kustutatavate failide nimekirja. *@
                 <div class="form-check">
                     <input class="form-check-input" type="checkbox"
-                           name="FileNamesToDelete" value="@file.StoredFileName"
-                           id="delete-@file.StoredFileName" />
-                    <label class="form-check-label" for="delete-@file.StoredFileName">
-                        Delete @file.FileName (@((file.FileSize / 1024d).ToString("0.0")) KB)
+                           name="FileNamesToDelete" value="@image.StoredFileName"
+                           id="delete-@image.StoredFileName" />
+                    <label class="form-check-label" for="delete-@image.StoredFileName">
+                        Delete @image.FileName (@((image.FileSize / 1024d).ToString("0.0")) KB)
                     </label>
                 </div>
             }
         </fieldset>
     }
 
-    @* Mitme faili valik võimaldab olemasolevale kosmoselaevale uusi faile lisada. *@
+    @* Multiple atribuut võimaldab valida korraga mitu uut faili. *@
     <div class="mb-3">
         <label asp-for="Files" class="form-label"></label>
         <input asp-for="Files" class="form-control" type="file" multiple />
@@ -69,9 +76,9 @@
         <span asp-validation-for="Files" class="text-danger"></span>
     </div>
 
-    @* Save salvestab muudatused, Back to list jätab lehe muutmata. *@
-    <button type="submit" class="btn btn-primary">Save</button>
-    <a asp-action="Index" class="btn btn-secondary">Back to list</a>
+    @* Nupu tekst näitab, kas vorm loob uue kirje või salvestab muudatused. *@
+    <button type="submit" class="btn btn-primary">@(isUpdate ? "Save" : "Create")</button>
+    <a asp-action="Index" asp-controller="Spaceship" class="btn btn-secondary">Back to list</a>
 </form>
 
 @section Scripts {

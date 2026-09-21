@@ -9,7 +9,7 @@
 
 @* Nupp uue kosmoselaeva loomise lehele liikumiseks. *@
 <div class="mb-3">
-    <a asp-action="Create" asp-controller="Spaceship" class="btn btn-primary">Create</a>
+    <a asp-action="CreateUpdate" asp-controller="Spaceship" class="btn btn-primary">Create</a>
 </div>
 
 <h1>Spaceships</h1>
@@ -24,6 +24,7 @@
             <th scope="col">Built Date</th>
             <th scope="col">Crew</th>
             <th scope="col">Engine Power</th>
+            <th scope="col">Files</th>
             <th scope="col"></th>
         </tr>
     </thead>
@@ -38,10 +39,11 @@
                 <td>@spaceship.CreatedAt.ToString("dd.MM.yyyy HH:mm")</td>
                 <td>@spaceship.Crew</td>
                 <td>@spaceship.EnginePower</td>
+                <td>@spaceship.FileCount</td>
                 <td class="text-nowrap">
                     @* Iga nupp saadab valitud kosmoselaeva ID vastavale Controlleri actionile. *@
                     <a asp-action="Details" asp-controller="Spaceship" asp-route-id="@spaceship.Id" class="btn btn-primary btn-sm">Details</a>
-                    <a asp-action="Update" asp-controller="Spaceship" asp-route-id="@spaceship.Id" class="btn btn-primary btn-sm">Update</a>
+                    <a asp-action="CreateUpdate" asp-controller="Spaceship" asp-route-id="@spaceship.Id" class="btn btn-primary btn-sm">Update</a>
                     <a asp-action="Delete" asp-controller="Spaceship" asp-route-id="@spaceship.Id" class="btn btn-outline-danger btn-sm">Delete</a>
                 </td>
             </tr>

@@ -7,7 +7,7 @@
 <h1>Create spaceship</h1>
 
 @* Vorm saadab kasutaja sisestatud andmed SpaceshipControlleri Create POST actionile. *@
-<form asp-action="Create" asp-controller="Spaceship" method="post">
+<form asp-action="Create" asp-controller="Spaceship" method="post" enctype="multipart/form-data">
     @* Siin kuvatakse üldised valideerimisvead. *@
     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
@@ -37,6 +37,14 @@
         <label asp-for="EnginePower" class="form-label"></label>
         <input asp-for="EnginePower" class="form-control" />
         <span asp-validation-for="EnginePower" class="text-danger"></span>
+    </div>
+
+    @* Mitme faili valik; enctype vormil võimaldab saata failid IFormFile objektidena. *@
+    <div class="mb-3">
+        <label asp-for="Files" class="form-label"></label>
+        <input asp-for="Files" class="form-control" type="file" multiple />
+        <div class="form-text">Up to 10 MB per file and 25 MB in total.</div>
+        <span asp-validation-for="Files" class="text-danger"></span>
     </div>
 
     @* Create salvestab kirje, Back to list viib tagasi nimekirja. *@

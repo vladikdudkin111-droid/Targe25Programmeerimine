@@ -1,4 +1,4 @@
-@model TARge25Shop.Models.Spaceship.SpaceshipIndexViewModel
+@model TARge25Shop.Models.Spaceship.SpaceshipDetailsViewModel
 @{
     // Lehe pealkiri brauseris.
     ViewData["Title"] = "Spaceship details";
@@ -25,9 +25,28 @@
 
     <dt class="col-sm-3">Updated</dt>
     <dd class="col-sm-9">@Model.UpdatedAt.ToString("dd.MM.yyyy HH:mm")</dd>
+
+    <dt class="col-sm-3">Files</dt>
+    <dd class="col-sm-9">
+        @* Kui faile ei ole, kuvame teavituse; vastasel juhul kuvame allalaadimislingid. *@
+        @if (Model.Images.Count == 0)
+        {
+            <span class="text-muted">No files</span>
+        }
+        else
+        {
+            <div class="row">
+                @foreach (var image in Model.Images)
+                {
+                    @* Partial kuvab ühe faili ja hoiab korduva HTML-i eraldi failis. *@
+                    <partial name="_Images" model="image" />
+                }
+            </div>
+        }
+    </dd>
 </dl>
 
 @* Nupud võimaldavad sama kirjet muuta, kustutada või minna tagasi nimekirja. *@
-<a asp-action="Update" asp-route-id="@Model.Id" class="btn btn-primary">Update</a>
+<a asp-action="CreateUpdate" asp-route-id="@Model.Id" class="btn btn-primary">Update</a>
 <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-outline-danger">Delete</a>
 <a asp-action="Index" class="btn btn-secondary">Back to list</a>
