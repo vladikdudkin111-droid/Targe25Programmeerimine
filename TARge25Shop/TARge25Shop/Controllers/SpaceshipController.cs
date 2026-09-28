@@ -19,16 +19,21 @@ namespace TARge25Shop.Controllers
         // Teenus tegeleb kosmoselaevade loomise, muutmise ja kustutamisega.
         private readonly ISpaceshipServices _spaceshipServices;
 
+        // Failiteenus võimaldab kustutada ühe pildi ilma kosmoselaeva kustutamata.
+        private readonly IFileServices _fileServices;
+
         // DbContexti kasutatakse nimekirja ja piltide lugemiseks.
         private readonly TARge25ShopContext _context;
 
         // Konstruktor saab sõltuvused ASP.NET Core dependency injection konteinerist.
         public SpaceshipController(
             ISpaceshipServices spaceshipServices,
-            TARge25ShopContext context)
+            TARge25ShopContext context,
+            IFileServices fileServices)
         {
             _spaceshipServices = spaceshipServices;
             _context = context;
+            _fileServices = fileServices;
         }
 
         // INDEX - kuvab kõik kosmoselaevad tabelina.
@@ -161,6 +166,42 @@ namespace TARge25Shop.Controllers
 
             await _spaceshipServices.Update(dto);
             return RedirectToAction(nameof(Index));
+        }
+
+        // REMOVE IMAGE POST - kustutab ühe valitud pildi ja säilitab kosmoselaeva.
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RemoveImage(
+            Guid imageId, Guid spaceshipId, bool returnToDetails = false)
+        {
+            // Vigase või puuduva ID korral ei tohi kustutamist alustada.
+            if (!ModelState.IsValid || imageId == Guid.Empty || spaceshipId == Guid.Empty)
+            {
+                return BadRequest(new { message = "Pildi või kosmoselaeva ID on vigane." });
+            }
+
+            // Vorm saadab ainult ID-d; tegeliku failitee leiab teenus andmebaasist.
+            var removed = await _fileServices.RemoveImageFromApi(new FileToApiDto
+            {
+                Id = imageId,
+                SpaceshipId = spaceshipId
+            });
+
+            if (!removed)
+            {
+                return NotFound(new { message = "Pilti ei leitud selle kosmoselaeva juurest." });
+            }
+
+            // JavaScript eemaldab pildikaardi ilma vormi salvestamata või lehte laadimata.
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            {
+                return Json(new { success = true });
+            }
+
+            // Ilma JavaScriptita suuname tagasi ainult ühele kahest lubatud vaatest.
+            return RedirectToAction(
+                returnToDetails ? nameof(Details) : nameof(Update),
+                new { id = spaceshipId });
         }
 
         // DELETE GET - kuvab enne kustutamist kinnitamise lehe.

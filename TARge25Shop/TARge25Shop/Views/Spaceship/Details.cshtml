@@ -3,6 +3,9 @@
 @{
     // Lehe pealkiri kuvatakse ka ühises Layout vaates.
     ViewData["Title"] = "Spaceship details";
+    // Details vaates võib kustutada üksikuid pilte ja jääda samale lehele.
+    ViewData["AllowImageRemoval"] = true;
+    ViewData["ImageDeleteReturnToDetails"] = true;
 }
 
 <h1>Details</h1>
@@ -32,7 +35,8 @@
 </dl>
 
 <!-- Iga salvestatud pilt kuvatakse eraldi _Images partiali abil. -->
-<div class="row mb-3">
+<p data-image-delete-status class="text-success" role="status" aria-live="polite"></p>
+<div class="row mb-3" data-image-gallery>
     @foreach (var image in Model.Image)
     {
         <partial name="_Images" model="image" />
@@ -41,3 +45,8 @@
 
 <a asp-action="Update" asp-route-id="@Model.Id" class="btn btn-primary">Update</a>
 <a asp-action="Index" class="btn btn-secondary">Back to list</a>
+
+@section Scripts {
+    <!-- Sama skript teenindab piltide kustutamist ka muutmise vaates. -->
+    <script src="~/js/spaceship-images.js" asp-append-version="true"></script>
+}

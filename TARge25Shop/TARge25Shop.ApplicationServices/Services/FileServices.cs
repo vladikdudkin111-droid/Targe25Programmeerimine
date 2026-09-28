@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 using TARge25Shop.Core.Domain;
 using TARge25Shop.Core.Dto;
@@ -74,6 +75,55 @@ namespace TARge25Shop.ApplicationServices.Services
             }
 
             // SaveChanges kutsutakse SpaceshipServices klassis üks kord kogu tehingu jaoks.
+        }
+
+        // Õpetaja RemoveImageFromApi meetod kustutab ainult ühe valitud pildi.
+        public async Task<bool> RemoveImageFromApi(FileToApiDto dto)
+        {
+            // Nii pildi kui ka kosmoselaeva ID peavad olema määratud.
+            if (dto.Id == Guid.Empty || !dto.SpaceshipId.HasValue
+                || dto.SpaceshipId.Value == Guid.Empty)
+            {
+                return false;
+            }
+
+            // Mõlema ID kontroll takistab teise kosmoselaeva pildi kustutamist.
+            var image = await _context.FileToApis.FirstOrDefaultAsync(file =>
+                file.Id == dto.Id && file.SpaceshipId == dto.SpaceshipId.Value);
+
+            // Kui pilt puudub või ei kuulu sellele kosmoselaevale, ei muudeta midagi.
+            if (image == null)
+            {
+                return false;
+            }
+
+            // Usaldame ainult andmebaasist loetud failinime, mitte vormi failiteed.
+            var fileName = image.ExistingFilePath;
+            if (!string.IsNullOrWhiteSpace(fileName))
+            {
+                // Failinimi ei tohi viidata üleslaadimise kaustast väljapoole.
+                if (Path.IsPathRooted(fileName) || fileName != Path.GetFileName(fileName)
+                    || fileName.Contains('/') || fileName.Contains('\\')
+                    || fileName == "." || fileName == "..")
+                {
+                    throw new InvalidOperationException("Pildi failinimi ei ole lubatud.");
+                }
+
+                var filePath = Path.Combine(GetUploadsFolder(), fileName);
+
+                // Puuduva füüsilise faili korral saab allesjäänud kirje siiski eemaldada.
+                if (File.Exists(filePath))
+                {
+                    File.Delete(filePath);
+                }
+            }
+
+            // Eemaldame ainult leitud pildi, mitte kosmoselaeva ega teisi pilte.
+            _context.FileToApis.Remove(image);
+
+            // Eraldi pildi kustutamine salvestab muudatuse kohe andmebaasi.
+            await _context.SaveChangesAsync();
+            return true;
         }
 
         // Meetod eemaldab ühe kosmoselaeva kõik failid ja FileToApi kirjed.

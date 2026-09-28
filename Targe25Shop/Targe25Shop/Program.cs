@@ -38,7 +38,7 @@ namespace TARge25Shop
             var app = builder.Build();
 
             // Rakendame olemasolevad migratsioonid automaatselt enne esimest päringut.
-            // Mudel ja migratsioonid on omavahel kooskõlas, seega ei teki PendingModelChanges viga.
+            // Olemasoleva andmebaasi migratsiooniajalugu peab sobima selle projekti migratsioonidega.
             using (var scope = app.Services.CreateScope())
             {
                 var context = scope.ServiceProvider.GetRequiredService<TARge25ShopContext>();

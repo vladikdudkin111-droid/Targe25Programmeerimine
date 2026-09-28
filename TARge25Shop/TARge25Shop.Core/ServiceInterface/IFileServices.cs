@@ -9,6 +9,9 @@ namespace TARge25Shop.Core.ServiceInterface
         // Salvestab DTO failid kettale ja lisab FileToApi kirjed DbContexti.
         void FilesToApi(SpaceshipDto dto, Spaceship domain);
 
+        // Kustutab ühe pildi faili ja andmebaasikirje; puuduv pilt annab false.
+        Task<bool> RemoveImageFromApi(FileToApiDto dto);
+
         // Eemaldab ühe kosmoselaeva failid kettalt ja DbContextist.
         void DeleteFiles(Guid spaceshipId);
     }

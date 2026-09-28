@@ -3,6 +3,9 @@
 @{
     // Id olemasolu määrab, kas sama vorm loob uue kirje või muudab olemasolevat.
     ViewData["Title"] = Model.Id.HasValue ? "Update spaceship" : "Create spaceship";
+    // Üksikuid pilte saab kustutada ainult olemasoleva kosmoselaeva muutmisel.
+    ViewData["AllowImageRemoval"] = Model.Id.HasValue;
+    ViewData["ImageDeleteReturnToDetails"] = false;
 }
 
 <h1>@ViewData["Title"]</h1>
@@ -58,14 +61,6 @@
         </div>
     </div>
 
-    <!-- Muutmise ajal kuvame juba salvestatud pildid õpetaja _Images partiali kaudu. -->
-    <div class="row mb-3">
-        @foreach (var image in Model.Image)
-        {
-            <partial name="_Images" model="image" />
-        }
-    </div>
-
     @if (Model.Id.HasValue)
     {
         <!-- Olemasoleva ID korral saadetakse vorm Update tegevusele. -->
@@ -84,7 +79,25 @@
     <a asp-action="Index" asp-controller="Spaceship" class="btn btn-secondary">Back to list</a>
 </form>
 
+@if (Model.Id.HasValue)
+{
+    <!-- Pildikaardid asuvad põhivormist väljas: HTML ei luba pesastatud vorme. -->
+    <h2 class="mt-4">Saved images</h2>
+    <p data-image-delete-status class="text-success" role="status" aria-live="polite"></p>
+    <noscript>
+        <p class="text-warning">Enne pildi kustutamist salvesta vormi muudatused: ilma JavaScriptita laaditakse leht uuesti.</p>
+    </noscript>
+    <div class="row mb-3" data-image-gallery>
+        @foreach (var image in Model.Image)
+        {
+            <partial name="_Images" model="image" />
+        }
+    </div>
+}
+
 @section Scripts {
     <!-- Partial aktiveerib brauseripoolse jQuery valideerimise. -->
     <partial name="_ValidationScriptsPartial" />
+    <!-- Pildi kustutamine ei kaota põhivormi salvestamata teksti ega valitud uusi faile. -->
+    <script src="~/js/spaceship-images.js" asp-append-version="true"></script>
 }
