@@ -5,29 +5,27 @@ using TARge25Shop.Data;
 
 namespace TARge25Shop
 {
+    // Program seadistab teenused, andmebaasi ja HTTP päringute töötlusahela.
     public class Program
     {
         public static void Main(string[] args)
         {
-            // Loome veebirakenduse builderi.
+            // Builder loeb konfiguratsiooni ja valmistab ette veebirakenduse.
             var builder = WebApplication.CreateBuilder(args);
 
-            // Lisame MVC toe: Controllerid ja Razor Views.
+            // MVC teenused võimaldavad kasutada Controllereid ja Razor vaateid.
             builder.Services.AddControllersWithViews();
 
-            // Registreerime Spaceship service dependency injection konteineris.
-            // Kui Controller küsib ISpaceshipServices, antakse talle SpaceshipServices objekt.
+            // Registreerime rakenduse teenused dependency injection konteineris.
             builder.Services.AddScoped<ISpaceshipServices, SpaceshipServices>();
-            builder.Services.AddScoped<
-                TARge25Shop.Core.ServiceInterface.IFileServices,
-                TARge25Shop.ApplicationServices.Services.FileServices>();
+            builder.Services.AddScoped<IFileServices, FileServices>();
 
-            // Registreerime Entity Framework DbContexti ja SQL Server ühenduse.
-            // Connection string loetakse appsettings.json failist nimega DefaultConnection.
+            // Ühenduse string peab olema appsettings.json failis määratud.
             var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
                 ?? throw new InvalidOperationException(
                     "Connection string 'DefaultConnection' was not found.");
 
+            // Registreerime Entity Framework DbContexti ja SQL Serveri ühenduse.
             builder.Services.AddDbContext<TARge25ShopContext>(options =>
                 options.UseSqlServer(
                     connectionString,
@@ -39,8 +37,8 @@ namespace TARge25Shop
             // Ehitame valmis veebirakenduse.
             var app = builder.Build();
 
-            // Rakendame andmebaasi migratsioonid automaatselt.
-            // Nii luuakse Spaceships ja FileToApis tabelid enne esimest päringut.
+            // Rakendame olemasolevad migratsioonid automaatselt enne esimest päringut.
+            // Mudel ja migratsioonid on omavahel kooskõlas, seega ei teki PendingModelChanges viga.
             using (var scope = app.Services.CreateScope())
             {
                 var context = scope.ServiceProvider.GetRequiredService<TARge25ShopContext>();
@@ -54,10 +52,10 @@ namespace TARge25Shop
                 app.UseHsts();
             }
 
-            // Suuname HTTP päringud HTTPS peale.
+            // Suuname HTTP päringud turvalisele HTTPS ühendusele.
             app.UseHttpsRedirection();
 
-            // Lubame wwwroot kaustast serveerida ka rakenduse töötamise ajal üles laaditud faile.
+            // UseStaticFiles teenindab ka rakenduse töö ajal üleslaaditud pilte.
             app.UseStaticFiles();
 
             // Aktiveerime routing süsteemi.
@@ -66,17 +64,16 @@ namespace TARge25Shop
             // Aktiveerime autoriseerimise middleware'i.
             app.UseAuthorization();
 
-            // Lubame staatilised failid, näiteks CSS ja JavaScript.
+            // MapStaticAssets teenindab buildi ajal teadaolevaid staatilisi faile.
             app.MapStaticAssets();
 
             // Määrame MVC vaikimisi route'i.
-            // Näiteks /Spaceship/Index või /Spaceship/CreateUpdate/{id}.
             app.MapControllerRoute(
                 name: "default",
                 pattern: "{controller=Home}/{action=Index}/{id?}")
                 .WithStaticAssets();
 
-            // Käivitame veebirakenduse.
+            // Käivitame rakenduse ja alustame HTTP päringute vastuvõtmist.
             app.Run();
         }
     }

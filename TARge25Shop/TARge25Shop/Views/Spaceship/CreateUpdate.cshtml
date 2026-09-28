@@ -1,87 +1,90 @@
 @model TARge25Shop.Models.Spaceship.SpaceshipCreateUpdateViewModel
-@{
-    // Id olemasolu määrab, kas vaade töötab loomise või muutmise režiimis.
-    var isUpdate = Model.Id.HasValue && Model.Id.Value != Guid.Empty;
 
-    // Sama pealkiri muutub automaatselt vastavalt vormi töörežiimile.
-    ViewData["Title"] = isUpdate ? "Update spaceship" : "Create spaceship";
+@{
+    // Id olemasolu määrab, kas sama vorm loob uue kirje või muudab olemasolevat.
+    ViewData["Title"] = Model.Id.HasValue ? "Update spaceship" : "Create spaceship";
 }
 
 <h1>@ViewData["Title"]</h1>
 
-@* Ühine vorm saadab nii loomise kui ka muutmise andmed CreateUpdate POST actionile. *@
-<form asp-action="CreateUpdate" asp-controller="Spaceship" method="post" enctype="multipart/form-data">
-    @* Muutmise korral saadame peidetud väljal olemasoleva kosmoselaeva ID. *@
-    @if (isUpdate)
-    {
-        <input asp-for="Id" type="hidden" />
-    }
+<!-- multipart/form-data on vajalik failide saatmiseks serverisse. -->
+<form method="post" enctype="multipart/form-data">
+    <!-- Peidetud väljad säilitavad kirje ID ja kuupäevad POST päringu ajal. -->
+    <input asp-for="Id" type="hidden" />
+    <input asp-for="CreatedAt" type="hidden" />
+    <input asp-for="UpdatedAt" type="hidden" />
 
-    @* Siin kuvatakse kõik vormi üldised valideerimisvead. *@
+    <!-- Kokkuvõte kuvab serveri ja mudeli valideerimisvead. -->
     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
-    @* Kosmoselaeva nimi. *@
-    <div class="mb-3">
-        <label asp-for="Name" class="form-label"></label>
-        <input asp-for="Name" class="form-control" />
-        <span asp-validation-for="Name" class="text-danger"></span>
+    <div class="form-group row mb-3">
+        <label asp-for="Name" class="col-sm-2 col-form-label"></label>
+        <div class="col-sm-10">
+            <input asp-for="Name" class="form-control" />
+            <span asp-validation-for="Name" class="text-danger"></span>
+        </div>
     </div>
 
-    @* Kosmoselaeva tüüp. *@
-    <div class="mb-3">
-        <label asp-for="ShipType" class="form-label"></label>
-        <input asp-for="ShipType" class="form-control" />
-        <span asp-validation-for="ShipType" class="text-danger"></span>
+    <div class="form-group row mb-3">
+        <label asp-for="ShipType" class="col-sm-2 col-form-label"></label>
+        <div class="col-sm-10">
+            <input asp-for="ShipType" class="form-control" />
+            <span asp-validation-for="ShipType" class="text-danger"></span>
+        </div>
     </div>
 
-    @* Meeskonnaliikmete arv. *@
-    <div class="mb-3">
-        <label asp-for="Crew" class="form-label"></label>
-        <input asp-for="Crew" class="form-control" />
-        <span asp-validation-for="Crew" class="text-danger"></span>
+    <div class="form-group row mb-3">
+        <label asp-for="Crew" class="col-sm-2 col-form-label"></label>
+        <div class="col-sm-10">
+            <input asp-for="Crew" class="form-control" />
+            <span asp-validation-for="Crew" class="text-danger"></span>
+        </div>
     </div>
 
-    @* Mootori võimsus. *@
-    <div class="mb-3">
-        <label asp-for="EnginePower" class="form-label"></label>
-        <input asp-for="EnginePower" class="form-control" />
-        <span asp-validation-for="EnginePower" class="text-danger"></span>
+    <div class="form-group row mb-3">
+        <label asp-for="EnginePower" class="col-sm-2 col-form-label"></label>
+        <div class="col-sm-10">
+            <input asp-for="EnginePower" class="form-control" />
+            <span asp-validation-for="EnginePower" class="text-danger"></span>
+        </div>
     </div>
 
-    @* Olemasolevaid faile näitame ainult muutmise režiimis. *@
-    @if (Model.ExistingImages.Count > 0)
+    <div class="form-group row mb-3">
+        <label asp-for="Files" class="col-sm-2 col-form-label"></label>
+        <div class="col-sm-10">
+            <!-- multiple lubab valida korraga mitu uut pilti. -->
+            <input asp-for="Files" class="form-control" multiple type="file" />
+            <span asp-validation-for="Files" class="text-danger"></span>
+        </div>
+    </div>
+
+    <!-- Muutmise ajal kuvame juba salvestatud pildid õpetaja _Images partiali kaudu. -->
+    <div class="row mb-3">
+        @foreach (var image in Model.Image)
+        {
+            <partial name="_Images" model="image" />
+        }
+    </div>
+
+    @if (Model.Id.HasValue)
     {
-        <fieldset class="mb-3">
-            <legend class="fs-6">Existing files</legend>
-            @foreach (var image in Model.ExistingImages)
-            {
-                @* Märkeruut lisab valitud failinime kustutatavate failide nimekirja. *@
-                <div class="form-check">
-                    <input class="form-check-input" type="checkbox"
-                           name="FileNamesToDelete" value="@image.StoredFileName"
-                           id="delete-@image.StoredFileName" />
-                    <label class="form-check-label" for="delete-@image.StoredFileName">
-                        Delete @image.FileName (@((image.FileSize / 1024d).ToString("0.0")) KB)
-                    </label>
-                </div>
-            }
-        </fieldset>
+        <!-- Olemasoleva ID korral saadetakse vorm Update tegevusele. -->
+        <button asp-action="Update" asp-controller="Spaceship" type="submit" class="btn btn-success">
+            Update
+        </button>
+    }
+    else
+    {
+        <!-- Tühja ID korral saadetakse vorm Create tegevusele. -->
+        <button asp-action="Create" asp-controller="Spaceship" type="submit" class="btn btn-success">
+            Create
+        </button>
     }
 
-    @* Multiple atribuut võimaldab valida korraga mitu uut faili. *@
-    <div class="mb-3">
-        <label asp-for="Files" class="form-label"></label>
-        <input asp-for="Files" class="form-control" type="file" multiple />
-        <div class="form-text">Up to 10 MB per file and 25 MB in total.</div>
-        <span asp-validation-for="Files" class="text-danger"></span>
-    </div>
-
-    @* Nupu tekst näitab, kas vorm loob uue kirje või salvestab muudatused. *@
-    <button type="submit" class="btn btn-primary">@(isUpdate ? "Save" : "Create")</button>
     <a asp-action="Index" asp-controller="Spaceship" class="btn btn-secondary">Back to list</a>
 </form>
 
 @section Scripts {
-    @* Lisame kliendipoolse valideerimise JavaScripti. *@
+    <!-- Partial aktiveerib brauseripoolse jQuery valideerimise. -->
     <partial name="_ValidationScriptsPartial" />
 }

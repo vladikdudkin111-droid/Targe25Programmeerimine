@@ -1,52 +1,43 @@
 @model TARge25Shop.Models.Spaceship.SpaceshipDetailsViewModel
+
 @{
-    // Lehe pealkiri brauseris.
+    // Lehe pealkiri kuvatakse ka ühises Layout vaates.
     ViewData["Title"] = "Spaceship details";
 }
 
-<h1>Spaceship details</h1>
+<h1>Details</h1>
 
-@* Kuvame valitud kosmoselaeva kõik põhiandmed. *@
+<!-- Definition list seob iga välja nimetuse selle väärtusega. -->
 <dl class="row">
-    <dt class="col-sm-3">Name</dt>
-    <dd class="col-sm-9">@Model.Name</dd>
+    <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Id)</dt>
+    <dd class="col-sm-9">@Html.DisplayFor(model => model.Id)</dd>
 
-    <dt class="col-sm-3">Ship type</dt>
-    <dd class="col-sm-9">@Model.ShipType</dd>
+    <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Name)</dt>
+    <dd class="col-sm-9">@Html.DisplayFor(model => model.Name)</dd>
 
-    <dt class="col-sm-3">Crew</dt>
-    <dd class="col-sm-9">@Model.Crew</dd>
+    <dt class="col-sm-3">@Html.DisplayNameFor(model => model.ShipType)</dt>
+    <dd class="col-sm-9">@Html.DisplayFor(model => model.ShipType)</dd>
 
-    <dt class="col-sm-3">Engine power</dt>
-    <dd class="col-sm-9">@Model.EnginePower</dd>
+    <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Crew)</dt>
+    <dd class="col-sm-9">@Html.DisplayFor(model => model.Crew)</dd>
 
-    <dt class="col-sm-3">Created</dt>
-    <dd class="col-sm-9">@Model.CreatedAt.ToString("dd.MM.yyyy HH:mm")</dd>
+    <dt class="col-sm-3">@Html.DisplayNameFor(model => model.EnginePower)</dt>
+    <dd class="col-sm-9">@Html.DisplayFor(model => model.EnginePower)</dd>
 
-    <dt class="col-sm-3">Updated</dt>
-    <dd class="col-sm-9">@Model.UpdatedAt.ToString("dd.MM.yyyy HH:mm")</dd>
+    <dt class="col-sm-3">@Html.DisplayNameFor(model => model.CreatedAt)</dt>
+    <dd class="col-sm-9">@Html.DisplayFor(model => model.CreatedAt)</dd>
 
-    <dt class="col-sm-3">Files</dt>
-    <dd class="col-sm-9">
-        @* Kui faile ei ole, kuvame teavituse; vastasel juhul kuvame allalaadimislingid. *@
-        @if (Model.Images.Count == 0)
-        {
-            <span class="text-muted">No files</span>
-        }
-        else
-        {
-            <div class="row">
-                @foreach (var image in Model.Images)
-                {
-                    @* Partial kuvab ühe faili ja hoiab korduva HTML-i eraldi failis. *@
-                    <partial name="_Images" model="image" />
-                }
-            </div>
-        }
-    </dd>
+    <dt class="col-sm-3">@Html.DisplayNameFor(model => model.UpdatedAt)</dt>
+    <dd class="col-sm-9">@Html.DisplayFor(model => model.UpdatedAt)</dd>
 </dl>
 
-@* Nupud võimaldavad sama kirjet muuta, kustutada või minna tagasi nimekirja. *@
-<a asp-action="CreateUpdate" asp-route-id="@Model.Id" class="btn btn-primary">Update</a>
-<a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-outline-danger">Delete</a>
+<!-- Iga salvestatud pilt kuvatakse eraldi _Images partiali abil. -->
+<div class="row mb-3">
+    @foreach (var image in Model.Image)
+    {
+        <partial name="_Images" model="image" />
+    }
+</div>
+
+<a asp-action="Update" asp-route-id="@Model.Id" class="btn btn-primary">Update</a>
 <a asp-action="Index" class="btn btn-secondary">Back to list</a>

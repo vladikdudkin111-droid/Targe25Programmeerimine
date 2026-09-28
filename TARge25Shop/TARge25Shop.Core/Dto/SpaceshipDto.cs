@@ -2,11 +2,11 @@ using Microsoft.AspNetCore.Http;
 
 namespace TARge25Shop.Core.Dto
 {
-    // DTO-d kasutame andmete liigutamiseks Controlleri ja Service kihi vahel.
+    // DTO liigutab kosmoselaeva ja failide andmeid Controlleri ning Service kihi vahel.
     public class SpaceshipDto
     {
-        // Kosmoselaeva unikaalne ID. Update meetod vajab seda olemasoleva kirje leidmiseks.
-        public Guid Id { get; set; }
+        // Id on loomisel tühi ja muutmisel sisaldab olemasoleva kirje tunnust.
+        public Guid? Id { get; set; }
 
         // Kosmoselaeva põhiandmed.
         public string Name { get; set; } = string.Empty;
@@ -14,13 +14,14 @@ namespace TARge25Shop.Core.Dto
         public int Crew { get; set; }
         public int EnginePower { get; set; }
 
-        // IFormFile objektid sisaldavad veebivormilt üles laaditud failide sisu ja metaandmeid.
+        // Files sisaldab vormilt saadud uusi üleslaaditavaid faile.
         public List<IFormFile> Files { get; set; } = new();
 
-        // Nimekiri ütleb, millised varem salvestatud failid tuleb muutmisel kustutada.
-        public List<string> FileNamesToDelete { get; set; } = new();
+        // FileToApiDtos sisaldab olemasolevate failikirjete andmeid.
+        public IEnumerable<FileToApiDto> FileToApiDtos { get; set; }
+            = new List<FileToApiDto>();
 
-        // Loomise ja viimase muutmise aeg.
+        // Kuupäevad liiguvad muutmise vormi ja teenuse vahel.
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
     }

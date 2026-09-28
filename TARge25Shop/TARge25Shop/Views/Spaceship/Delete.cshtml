@@ -1,36 +1,45 @@
 @model TARge25Shop.Models.Spaceship.SpaceshipDeleteViewModel
+
 @{
-    // Lehe pealkiri brauseris.
+    // Delete leht küsib enne päris kustutamist kasutajalt kinnituse.
     ViewData["Title"] = "Delete spaceship";
 }
 
-<h1>Delete spaceship</h1>
+<h1>Delete</h1>
+<h3>Are you sure you want to delete this spaceship?</h3>
 
-@* Enne kustutamist küsime kasutajalt kinnitust. *@
-<div class="alert alert-warning">
-    Are you sure you want to delete <strong>@Model.Name</strong>?
-</div>
-
-@* Kuvame kustutatava kosmoselaeva põhiandmed, et kasutaja saaks valikut kontrollida. *@
+<!-- Kuvame kustutatava kirje andmed, et kasutaja saaks valikut kontrollida. -->
 <dl class="row">
-    <dt class="col-sm-3">Ship type</dt>
-    <dd class="col-sm-9">@Model.ShipType</dd>
+    <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Name)</dt>
+    <dd class="col-sm-9">@Html.DisplayFor(model => model.Name)</dd>
 
-    <dt class="col-sm-3">Crew</dt>
-    <dd class="col-sm-9">@Model.Crew</dd>
+    <dt class="col-sm-3">@Html.DisplayNameFor(model => model.ShipType)</dt>
+    <dd class="col-sm-9">@Html.DisplayFor(model => model.ShipType)</dd>
 
-    <dt class="col-sm-3">Engine power</dt>
-    <dd class="col-sm-9">@Model.EnginePower</dd>
+    <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Crew)</dt>
+    <dd class="col-sm-9">@Html.DisplayFor(model => model.Crew)</dd>
 
-    <dt class="col-sm-3">Files</dt>
-    <dd class="col-sm-9">@Model.ImageCount</dd>
+    <dt class="col-sm-3">@Html.DisplayNameFor(model => model.EnginePower)</dt>
+    <dd class="col-sm-9">@Html.DisplayFor(model => model.EnginePower)</dd>
+
+    <dt class="col-sm-3">@Html.DisplayNameFor(model => model.CreatedAt)</dt>
+    <dd class="col-sm-9">@Html.DisplayFor(model => model.CreatedAt)</dd>
+
+    <dt class="col-sm-3">@Html.DisplayNameFor(model => model.UpdatedAt)</dt>
+    <dd class="col-sm-9">@Html.DisplayFor(model => model.UpdatedAt)</dd>
 </dl>
 
-@* POST vorm saadab kustutatava kirje ID Controllerisse. *@
-<form asp-action="Delete" asp-controller="Spaceship" method="post">
-    <input asp-for="Id" type="hidden" />
+<!-- Need pildid kustutatakse koos kosmoselaevaga. -->
+<div class="row mb-3">
+    @foreach (var image in Model.Image)
+    {
+        <partial name="_Images" model="image" />
+    }
+</div>
 
-    @* Delete kinnitab kustutamise, Cancel viib tagasi nimekirja. *@
+<!-- POST vorm kaitseb kustutamist juhusliku GET päringu eest. -->
+<form asp-action="DeleteConfirmation" method="post">
+    <input asp-for="Id" name="id" type="hidden" />
     <button type="submit" class="btn btn-danger">Delete</button>
-    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+    <a asp-action="Index" class="btn btn-secondary">Back to list</a>
 </form>

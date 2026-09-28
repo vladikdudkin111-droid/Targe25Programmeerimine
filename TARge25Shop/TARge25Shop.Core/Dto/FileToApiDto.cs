@@ -1,24 +1,15 @@
 namespace TARge25Shop.Core.Dto
 {
-    // Veebirakenduse wwwroot kaustas oleva faili andmed.
+    // DTO liigutab failikirje andmeid rakenduse kihtide vahel.
     public class FileToApiDto
     {
-        // FileName on kasutajale kuvatav algne failinimi ilma Guid prefiksita.
-        public string FileName { get; set; } = string.Empty;
+        // Id on failikirje unikaalne tunnus.
+        public Guid Id { get; set; }
 
-        // StoredFileName on kettal ja andmebaasis olev unikaalne failinimi.
-        public string StoredFileName { get; set; } = string.Empty;
+        // ExistingFilePath on kettale salvestatud unikaalne failinimi.
+        public string? ExistingFilePath { get; set; }
 
-        // RelativePath on brauseris kasutatav suhteline URL failini.
-        public string RelativePath { get; set; } = string.Empty;
-
-        // FilePath on serveri kettal olev faili täielik füüsiline tee.
-        public string FilePath { get; set; } = string.Empty;
-
-        // FileSize näitab faili suurust baitides.
-        public long FileSize { get; set; }
-
-        // CreatedAt näitab, millal füüsiline fail kettale loodi.
-        public DateTime CreatedAt { get; set; }
+        // SpaceshipId näitab, millise kosmoselaeva juurde fail kuulub.
+        public Guid? SpaceshipId { get; set; }
     }
 }

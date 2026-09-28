@@ -6,8 +6,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <!-- FrameworkReference annab DTO-dele IFormFile tüübi ilma vana ASP.NET Core 2.3 paketita. -->
   <ItemGroup>
-    <!-- ASP.NET Core viide võimaldab DTO-s kasutada üleslaaditud faili tüüpi IFormFile. -->
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 

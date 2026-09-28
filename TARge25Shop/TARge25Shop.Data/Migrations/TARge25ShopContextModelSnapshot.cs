@@ -29,15 +29,12 @@ namespace TARge25Shop.Data.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("ExistingFilePath")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<Guid>("SpaceshipId")
+                    b.Property<Guid?>("SpaceshipId")
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("SpaceshipId");
 
                     b.ToTable("FileToApis");
                 });
@@ -72,7 +69,6 @@ namespace TARge25Shop.Data.Migrations
 
                     b.ToTable("Spaceships");
                 });
-
 #pragma warning restore 612, 618
         }
     }

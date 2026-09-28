@@ -7,12 +7,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\TARge25Shop.Core\TARge25Shop.Core.csproj" />
-    <ProjectReference Include="..\TARge25Shop.Data\TARge25Shop.Data.csproj" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.12" />
   </ItemGroup>
 
   <ItemGroup>
-    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <ProjectReference Include="..\TARge25Shop.Core\TARge25Shop.Core.csproj" />
+    <ProjectReference Include="..\TARge25Shop.Data\TARge25Shop.Data.csproj" />
   </ItemGroup>
 
 </Project>

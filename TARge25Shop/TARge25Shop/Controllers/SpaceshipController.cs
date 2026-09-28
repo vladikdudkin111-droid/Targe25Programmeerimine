@@ -1,7 +1,5 @@
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using TARge25Shop.Core.Domain;
 using TARge25Shop.Core.Dto;
 using TARge25Shop.Core.ServiceInterface;
 using TARge25Shop.Data;
@@ -9,74 +7,105 @@ using TARge25Shop.Models.Spaceship;
 
 namespace TARge25Shop.Controllers
 {
-    // Controller tegeleb kosmoselaevade lehtede ja kasutaja päringutega.
+    // Controller ühendab kasutaja vaated teenuste ja andmebaasiga.
     public class SpaceshipController : Controller
     {
-        // Teenus sisaldab kosmoselaevade loomise, muutmise, vaatamise ja kustutamise loogikat.
+        // Ühe faili suuruse piirang on 10 MB.
+        private const long MaximumFileSize = 10 * 1024 * 1024;
+
+        // Kõigi ühe vormiga saadetud failide piirang on 25 MB.
+        private const long MaximumTotalFileSize = 25 * 1024 * 1024;
+
+        // Teenus tegeleb kosmoselaevade loomise, muutmise ja kustutamisega.
         private readonly ISpaceshipServices _spaceshipServices;
 
-        // Failiteenus annab ligipääsu kosmoselaevaga seotud failidele.
-        private readonly IFileServices _fileServices;
-
-        // Andmebaasi konteksti kasutame kosmoselaevade nimekirja lugemiseks.
+        // DbContexti kasutatakse nimekirja ja piltide lugemiseks.
         private readonly TARge25ShopContext _context;
 
-        // Konstruktor saab vajalikud sõltuvused dependency injection konteinerist.
+        // Konstruktor saab sõltuvused ASP.NET Core dependency injection konteinerist.
         public SpaceshipController(
             ISpaceshipServices spaceshipServices,
-            IFileServices fileServices,
             TARge25ShopContext context)
         {
             _spaceshipServices = spaceshipServices;
-            _fileServices = fileServices;
             _context = context;
         }
 
-        // INDEX - kuvab kõik andmebaasis olevad kosmoselaevad.
+        // INDEX - kuvab kõik kosmoselaevad tabelina.
         public async Task<IActionResult> Index()
         {
-            // Loeme kosmoselaevad andmebaasist ja järjestame need loomise aja järgi.
-            var spaceshipEntities = await _context.Spaceships
-                .OrderBy(x => x.CreatedAt)
+            // AsNoTracking sobib lugemiseks, sest Index lehel andmeid ei muudeta.
+            var result = await _context.Spaceships
+                .AsNoTracking()
+                .OrderBy(spaceship => spaceship.CreatedAt)
+                .Select(spaceship => new SpaceshipIndexViewModel
+                {
+                    Id = spaceship.Id,
+                    Name = spaceship.Name,
+                    ShipType = spaceship.ShipType,
+                    Crew = spaceship.Crew,
+                    EnginePower = spaceship.EnginePower,
+                    CreatedAt = spaceship.CreatedAt,
+                    UpdatedAt = spaceship.UpdatedAt
+                })
                 .ToListAsync();
 
-            // Teisendame Domain objektid Index vaatele sobivateks ViewModeliteks.
-            var spaceships = spaceshipEntities
-                .Select(x => new SpaceshipIndexViewModel
-                {
-                    Id = x.Id,
-                    Name = x.Name,
-                    ShipType = x.ShipType,
-                    Crew = x.Crew,
-                    EnginePower = x.EnginePower,
-                    FileCount = _fileServices.FilesFromApi(x.Id).Count,
-                    CreatedAt = x.CreatedAt,
-                    UpdatedAt = x.UpdatedAt
-                })
-                .ToList();
-
-            // Anname kosmoselaevade nimekirja Index vaatele.
-            return View(spaceships);
+            return View(result);
         }
 
-        // CREATEUPDATE GET - avab ühise loomise või muutmise vormi.
+        // CREATE GET - avab õpetaja näite järgi ühise CreateUpdate vormi.
         [HttpGet]
-        public async Task<IActionResult> CreateUpdate(Guid? id)
+        public IActionResult Create()
         {
-            // Puuduv Id tähendab, et kasutaja soovib luua uue kosmoselaeva.
-            if (!id.HasValue || id.Value == Guid.Empty)
+            return View("CreateUpdate", new SpaceshipCreateUpdateViewModel());
+        }
+
+        // CREATE POST - kontrollib vormi ning saadab andmed teenusele salvestamiseks.
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create(SpaceshipCreateUpdateViewModel vm)
+        {
+            // Kontrollime üleslaaditud failide suurusi enne salvestamist.
+            ValidateFiles(vm.Files);
+
+            // Vigase vormi korral kuvatakse sama vorm koos valideerimisteadetega.
+            if (!ModelState.IsValid)
             {
-                return View(new SpaceshipCreateUpdateViewModel());
+                return View("CreateUpdate", vm);
             }
 
-            // Olemasoleva Id korral otsime muudetava kosmoselaeva andmebaasist.
-            var spaceship = await _spaceshipServices.DetailAsync(id.Value);
+            // ViewModel teisendatakse DTO-ks, mida ApplicationServices kiht kasutab.
+            var dto = new SpaceshipDto
+            {
+                Name = vm.Name,
+                ShipType = vm.ShipType,
+                Crew = vm.Crew,
+                EnginePower = vm.EnginePower,
+                Files = vm.Files,
+                FileToApiDtos = vm.Image.Select(image => new FileToApiDto
+                {
+                    Id = image.ImageId,
+                    ExistingFilePath = image.FilePath,
+                    SpaceshipId = image.SpaceshipId
+                }).ToArray()
+            };
+
+            await _spaceshipServices.Create(dto);
+            return RedirectToAction(nameof(Index));
+        }
+
+        // UPDATE GET - loeb olemasoleva kirje ja avab sama CreateUpdate vormi.
+        [HttpGet]
+        public async Task<IActionResult> Update(Guid id)
+        {
+            var spaceship = await _spaceshipServices.DetailAsync(id);
+
+            // Puuduva ID korral tagastatakse korrektne HTTP 404 vastus.
             if (spaceship == null)
             {
                 return NotFound();
             }
 
-            // Täidame ühise ViewModeli olemasolevate andmete ja failidega.
             var vm = new SpaceshipCreateUpdateViewModel
             {
                 Id = spaceship.Id,
@@ -84,110 +113,68 @@ namespace TARge25Shop.Controllers
                 ShipType = spaceship.ShipType,
                 Crew = spaceship.Crew,
                 EnginePower = spaceship.EnginePower,
-                ExistingImages = ToImageViewModels(spaceship.Id)
+                CreatedAt = spaceship.CreatedAt,
+                UpdatedAt = spaceship.UpdatedAt,
+                Image = await LoadImagesAsync(id)
             };
 
-            // Avame CreateUpdate vaate muutmise režiimis.
-            return View(vm);
+            return View("CreateUpdate", vm);
         }
 
-        // CREATEUPDATE POST - loob uue või uuendab olemasoleva kosmoselaeva.
+        // UPDATE POST - muudab olemasolevat kirjet ja võib lisada uusi pilte.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> CreateUpdate(SpaceshipCreateUpdateViewModel vm)
+        public async Task<IActionResult> Update(SpaceshipCreateUpdateViewModel vm)
         {
-            // Kontrollime uute failide suurust enne salvestamist.
+            // Ilma ID-ta ei ole võimalik teada, millist kirjet muuta.
+            if (!vm.Id.HasValue)
+            {
+                return BadRequest();
+            }
+
             ValidateFiles(vm.Files);
 
-            Spaceship? existing = null;
-
-            // Kui Id on olemas, kontrollime, et muudetav kirje on endiselt andmebaasis.
-            if (vm.Id.HasValue && vm.Id.Value != Guid.Empty)
-            {
-                existing = await _spaceshipServices.DetailAsync(vm.Id.Value);
-                if (existing == null)
-                {
-                    return NotFound();
-                }
-            }
-
-            // Vigase vormi korral taastame olemasolevate failide nimekirja ja näitame vormi uuesti.
+            // Kui valideerimine ebaõnnestub, laadime olemasolevad pildid uuesti.
             if (!ModelState.IsValid)
             {
-                if (existing != null)
-                {
-                    vm.ExistingImages = ToImageViewModels(existing.Id);
-                }
-
-                return View(vm);
+                vm.Image = await LoadImagesAsync(vm.Id.Value);
+                return View("CreateUpdate", vm);
             }
 
-            // Teisendame vormi andmed teenusekihile sobivaks DTO-ks.
+            // Kontrollime enne teenuse väljakutsumist, et kirje on alles olemas.
+            if (await _spaceshipServices.DetailAsync(vm.Id.Value) == null)
+            {
+                return NotFound();
+            }
+
             var dto = new SpaceshipDto
             {
-                Id = existing?.Id ?? Guid.Empty,
+                Id = vm.Id,
                 Name = vm.Name,
                 ShipType = vm.ShipType,
                 Crew = vm.Crew,
                 EnginePower = vm.EnginePower,
                 Files = vm.Files,
-                FileNamesToDelete = vm.FileNamesToDelete
+                CreatedAt = vm.CreatedAt,
+                UpdatedAt = vm.UpdatedAt
             };
 
-            if (existing == null)
-            {
-                // Ilma olemasoleva kirjega kutsume loomise teenusemeetodi.
-                await _spaceshipServices.Create(dto);
-            }
-            else
-            {
-                // Olemasoleva kirjega kutsume muutmise teenusemeetodi.
-                await _spaceshipServices.Update(dto);
-            }
-
-            // Pärast salvestamist läheme tagasi kosmoselaevade nimekirja.
+            await _spaceshipServices.Update(dto);
             return RedirectToAction(nameof(Index));
         }
 
-        // DETAILS GET - kuvab ühe kosmoselaeva detailse info.
-        [HttpGet]
-        public async Task<IActionResult> Details(Guid id)
-        {
-            // Otsime kosmoselaeva ID järgi.
-            var spaceship = await _spaceshipServices.DetailAsync(id);
-            if (spaceship == null)
-            {
-                return NotFound();
-            }
-
-            // Kasutame Details lehel sellele mõeldud eraldi ViewModelit.
-            var vm = new SpaceshipDetailsViewModel
-            {
-                Id = spaceship.Id,
-                Name = spaceship.Name,
-                ShipType = spaceship.ShipType,
-                Crew = spaceship.Crew,
-                EnginePower = spaceship.EnginePower,
-                Images = ToImageViewModels(spaceship.Id),
-                CreatedAt = spaceship.CreatedAt,
-                UpdatedAt = spaceship.UpdatedAt
-            };
-
-            return View(vm);
-        }
-
-        // DELETE GET - avab kustutamise kinnitamise lehe.
+        // DELETE GET - kuvab enne kustutamist kinnitamise lehe.
         [HttpGet]
         public async Task<IActionResult> Delete(Guid id)
         {
-            // Otsime kustutatava kosmoselaeva ID järgi.
             var spaceship = await _spaceshipServices.DetailAsync(id);
+
             if (spaceship == null)
             {
                 return NotFound();
             }
 
-            // Kasutame kustutamise lehel ainult seal vajalikke andmeid sisaldavat ViewModelit.
+            // Domain objekt teisendatakse kustutamise ViewModeliks.
             var vm = new SpaceshipDeleteViewModel
             {
                 Id = spaceship.Id,
@@ -195,20 +182,22 @@ namespace TARge25Shop.Controllers
                 ShipType = spaceship.ShipType,
                 Crew = spaceship.Crew,
                 EnginePower = spaceship.EnginePower,
-                ImageCount = _fileServices.FilesFromApi(spaceship.Id).Count
+                CreatedAt = spaceship.CreatedAt,
+                UpdatedAt = spaceship.UpdatedAt,
+                Image = await LoadImagesAsync(id)
             };
 
             return View(vm);
         }
 
-        // DELETE POST - kustutab kosmoselaeva pärast kasutaja kinnitust.
-        [HttpPost, ActionName("Delete")]
+        // DELETE POST - eemaldab kirje alles pärast kasutaja kinnitust.
+        [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(Guid id)
+        public async Task<IActionResult> DeleteConfirmation(Guid id)
         {
-            // Teenus kustutab kosmoselaeva, selle failid ja FileToApi kirjed.
-            var deleted = await _spaceshipServices.Delete(id);
-            if (deleted == null)
+            var spaceship = await _spaceshipServices.Delete(id);
+
+            if (spaceship == null)
             {
                 return NotFound();
             }
@@ -216,69 +205,64 @@ namespace TARge25Shop.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // DOWNLOAD GET - tagastab valitud faili kasutajale allalaadimiseks.
+        // DETAILS - kuvab ühe kosmoselaeva andmed ja sellega seotud pildid.
         [HttpGet]
-        public IActionResult DownloadFile(Guid spaceshipId, string storedFileName)
+        public async Task<IActionResult> Details(Guid id)
         {
-            // Failiteenus kontrollib nii andmebaasikirjet kui ka füüsilise faili olemasolu.
-            var file = _fileServices.FileFromApi(spaceshipId, storedFileName);
-            if (file == null)
+            var spaceship = await _spaceshipServices.DetailAsync(id);
+
+            if (spaceship == null)
             {
                 return NotFound();
             }
 
-            // PhysicalFile saadab serveri kettal oleva faili brauserile.
-            return PhysicalFile(file.FilePath, "application/octet-stream", file.FileName);
+            var vm = new SpaceshipDetailsViewModel
+            {
+                Id = spaceship.Id,
+                Name = spaceship.Name,
+                ShipType = spaceship.ShipType,
+                Crew = spaceship.Crew,
+                EnginePower = spaceship.EnginePower,
+                CreatedAt = spaceship.CreatedAt,
+                UpdatedAt = spaceship.UpdatedAt,
+                Image = await LoadImagesAsync(id)
+            };
+
+            return View(vm);
         }
 
-        // Abimeetod teisendab faili DTO-d õpetaja struktuurile vastavateks ImageViewModeliteks.
-        private List<ImageViewModel> ToImageViewModels(Guid spaceshipId)
+        // Abimeetod loeb ühe kosmoselaeva pildid ja teisendab need ViewModeliteks.
+        private async Task<List<ImageViewModel>> LoadImagesAsync(Guid spaceshipId)
         {
-            return _fileServices.FilesFromApi(spaceshipId)
+            return await _context.FileToApis
+                .AsNoTracking()
+                .Where(file => file.SpaceshipId == spaceshipId)
                 .Select(file => new ImageViewModel
                 {
-                    SpaceshipId = spaceshipId,
-                    // FilePath peab sisaldama kettale salvestatud unikaalset failinime.
-                    FilePath = file.StoredFileName,
-                    FileName = file.FileName,
-                    StoredFileName = file.StoredFileName,
-                    RelativePath = file.RelativePath,
-                    FileSize = file.FileSize,
-                    CreatedAt = file.CreatedAt
+                    ImageId = file.Id,
+                    FilePath = file.ExistingFilePath,
+                    SpaceshipId = file.SpaceshipId
                 })
-                .ToList();
+                .ToListAsync();
         }
 
-        // Abimeetod kontrollib ühe faili ja kõikide failide maksimaalset suurust.
+        // Abimeetod lisab ModelState'i vead, kui failid ületavad lubatud suuruse.
         private void ValidateFiles(IEnumerable<IFormFile> files)
         {
-            // Ühe faili maksimaalne lubatud suurus on 10 MB.
-            const long maximumFileSize = 10 * 1024 * 1024;
+            var uploadedFiles = files.Where(file => file.Length > 0).ToList();
 
-            // Kõikide failide maksimaalne kogusuurus on 25 MB.
-            const long maximumTotalSize = 25 * 1024 * 1024;
-
-            long totalSize = 0;
-
-            // Tühjad failid jätame vahele, sest neid ei ole vaja salvestada.
-            foreach (var file in files.Where(file => file.Length > 0))
+            if (uploadedFiles.Any(file => file.Length > MaximumFileSize))
             {
-                if (file.Length > maximumFileSize)
-                {
-                    // Liiga suure faili korral lisame vormile valideerimisvea.
-                    ModelState.AddModelError(nameof(SpaceshipCreateUpdateViewModel.Files),
-                        $"File '{file.FileName}' is larger than 10 MB.");
-                    continue;
-                }
+                ModelState.AddModelError(
+                    nameof(SpaceshipCreateUpdateViewModel.Files),
+                    "Ühe faili suurus võib olla maksimaalselt 10 MB.");
+            }
 
-                totalSize += file.Length;
-                if (totalSize > maximumTotalSize)
-                {
-                    // Liiga suure kogusuuruse korral lõpetame edasise kontrollimise.
-                    ModelState.AddModelError(nameof(SpaceshipCreateUpdateViewModel.Files),
-                        "The total size of all files cannot exceed 25 MB.");
-                    break;
-                }
+            if (uploadedFiles.Sum(file => file.Length) > MaximumTotalFileSize)
+            {
+                ModelState.AddModelError(
+                    nameof(SpaceshipCreateUpdateViewModel.Files),
+                    "Failide kogusuurus võib olla maksimaalselt 25 MB.");
             }
         }
     }
