@@ -1,0 +1,30 @@
+@model TARge25Shop.Models.RealEstate.RealEstateDetailsViewModel
+
+@{
+    // Details leht kuvab valitud kinnisvaraobjekti andmed.
+    ViewData["Title"] = "Real estate details";
+}
+
+<h1>Real estate details</h1>
+
+@* Nimetused tulevad ViewModeli Display atribuutidest ning väärtused andmebaasist. *@
+<dl class="row">
+    <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Id)</dt>
+    <dd class="col-sm-9">@Model.Id</dd>
+    <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Address)</dt>
+    <dd class="col-sm-9">@Model.Address</dd>
+    <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Area)</dt>
+    <dd class="col-sm-9">@Model.Area.ToString("0.00")</dd>
+    <dt class="col-sm-3">@Html.DisplayNameFor(model => model.RoomCount)</dt>
+    <dd class="col-sm-9">@Model.RoomCount</dd>
+    <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Price)</dt>
+    <dd class="col-sm-9">@Model.Price.ToString("0.00")</dd>
+    <dt class="col-sm-3">@Html.DisplayNameFor(model => model.CreatedAt)</dt>
+    <dd class="col-sm-9">@Model.CreatedAt.ToString("dd.MM.yyyy HH:mm")</dd>
+    <dt class="col-sm-3">@Html.DisplayNameFor(model => model.UpdatedAt)</dt>
+    <dd class="col-sm-9">@Model.UpdatedAt.ToString("dd.MM.yyyy HH:mm")</dd>
+</dl>
+
+<a asp-action="Update" asp-route-id="@Model.Id" class="btn btn-primary">Update</a>
+<a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-outline-danger">Delete</a>
+<a asp-action="Index" class="btn btn-secondary">Back to list</a>

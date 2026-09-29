@@ -17,5 +17,20 @@ namespace TARge25Shop.Data
 
         // DbSet esindab andmebaasis FileToApis tabelit.
         public DbSet<FileToApi> FileToApis { get; set; } = null!;
+
+        // DbSet esindab kinnisvaraobjektide tabelit.
+        public DbSet<RealEstate> RealEstates { get; set; } = null!;
+
+        // Määrame kinnisvara tabeli veergude omadused.
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            // Aadressi pikkus ja kümnendkohtade arv peavad vastama vormi piirangutele.
+            modelBuilder.Entity<RealEstate>().Property(item => item.Address)
+                .HasMaxLength(250).IsRequired();
+            modelBuilder.Entity<RealEstate>().Property(item => item.Area).HasPrecision(18, 2);
+            modelBuilder.Entity<RealEstate>().Property(item => item.Price).HasPrecision(18, 2);
+        }
     }
 }

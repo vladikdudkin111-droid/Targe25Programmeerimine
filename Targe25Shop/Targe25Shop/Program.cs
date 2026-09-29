@@ -20,6 +20,9 @@ namespace TARge25Shop
             builder.Services.AddScoped<ISpaceshipServices, SpaceshipServices>();
             builder.Services.AddScoped<IFileServices, FileServices>();
 
+            // RealEstate CRUD teenus kasutab sama kihilist ülesehitust.
+            builder.Services.AddScoped<IRealEstateServices, RealEstateServices>();
+
             // Ühenduse string peab olema appsettings.json failis määratud.
             var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
                 ?? throw new InvalidOperationException(

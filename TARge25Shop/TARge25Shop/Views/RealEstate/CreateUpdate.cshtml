@@ -1,0 +1,58 @@
+@model TARge25Shop.Models.RealEstate.RealEstateCreateUpdateViewModel
+
+@{
+    // Sama vaade teenindab loomist ja muutmist, nagu Spaceshipi CreateUpdate.
+    ViewData["Title"] = Model.Id.HasValue ? "Update real estate" : "Create real estate";
+}
+
+<h1>@ViewData["Title"]</h1>
+
+@* Vorm saadab kinnisvara põhiandmed vastavale POST tegevusele. *@
+<form asp-controller="RealEstate" asp-action="@(Model.Id.HasValue ? "Update" : "Create")"
+      method="post" asp-antiforgery="true">
+    @* Peidetud Id määrab muutmisel objekti; kuupäevad määrab alati server. *@
+    <input asp-for="Id" type="hidden" />
+    <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+
+    @* Iga välja silt ja veateade on seotud vastava ViewModeli omadusega. *@
+    <div class="form-group row mb-3">
+        <label asp-for="Address" class="col-sm-2 col-form-label"></label>
+        <div class="col-sm-10">
+            <input asp-for="Address" class="form-control" maxlength="250" />
+            <span asp-validation-for="Address" class="text-danger"></span>
+        </div>
+    </div>
+
+    <div class="form-group row mb-3">
+        <label asp-for="Area" class="col-sm-2 col-form-label"></label>
+        <div class="col-sm-10">
+            @* Samm 0.01 lubab sisestada pindala sajandiku täpsusega. *@
+            <input asp-for="Area" type="number" step="0.01" min="0.01" max="10000000" class="form-control" />
+            <span asp-validation-for="Area" class="text-danger"></span>
+        </div>
+    </div>
+
+    <div class="form-group row mb-3">
+        <label asp-for="RoomCount" class="col-sm-2 col-form-label"></label>
+        <div class="col-sm-10">
+            <input asp-for="RoomCount" type="number" step="1" min="0" max="1000" class="form-control" />
+            <span asp-validation-for="RoomCount" class="text-danger"></span>
+        </div>
+    </div>
+
+    <div class="form-group row mb-3">
+        <label asp-for="Price" class="col-sm-2 col-form-label"></label>
+        <div class="col-sm-10">
+            <input asp-for="Price" type="number" step="0.01" min="0" max="10000000000" class="form-control" />
+            <span asp-validation-for="Price" class="text-danger"></span>
+        </div>
+    </div>
+
+    <button type="submit" class="btn btn-success">@(Model.Id.HasValue ? "Update" : "Create")</button>
+    <a asp-action="Index" class="btn btn-secondary">Back to list</a>
+</form>
+
+@section Scripts {
+    @* Brauseripoolne valideerimine täiendab serveris tehtavaid kontrolle. *@
+    <partial name="_ValidationScriptsPartial" />
+}
