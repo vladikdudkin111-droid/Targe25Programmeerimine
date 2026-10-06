@@ -1,25 +1,14 @@
 @model TARge25Shop.Models.Spaceship.SpaceshipCreateUpdateViewModel
-
 @{
-    // Id olemasolu määrab, kas sama vorm loob uue kirje või muudab olemasolevat.
-    ViewData["Title"] = Model.Id.HasValue ? "Update spaceship" : "Create spaceship";
-    // Üksikuid pilte saab kustutada ainult olemasoleva kosmoselaeva muutmisel.
-    ViewData["AllowImageRemoval"] = Model.Id.HasValue;
-    ViewData["ImageDeleteReturnToDetails"] = false;
+    ViewData["Title"] = Model.Id.HasValue ? "Update" : "Create";
 }
-
 <h1>@ViewData["Title"]</h1>
 
-<!-- multipart/form-data on vajalik failide saatmiseks serverisse. -->
-<form method="post" enctype="multipart/form-data">
-    <!-- Peidetud väljad säilitavad kirje ID ja kuupäevad POST päringu ajal. -->
+@* Põhivorm saadab muudetavad väljad ja valitud uued failid. *@
+<form asp-controller="Spaceship" asp-action="@(Model.Id.HasValue ? "Update" : "Create")"
+      method="post" enctype="multipart/form-data" asp-antiforgery="true">
     <input asp-for="Id" type="hidden" />
-    <input asp-for="CreatedAt" type="hidden" />
-    <input asp-for="UpdatedAt" type="hidden" />
-
-    <!-- Kokkuvõte kuvab serveri ja mudeli valideerimisvead. -->
-    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-
+    <div asp-validation-summary="All" class="text-danger"></div>
     <div class="form-group row mb-3">
         <label asp-for="Name" class="col-sm-2 col-form-label"></label>
         <div class="col-sm-10">
@@ -27,7 +16,6 @@
             <span asp-validation-for="Name" class="text-danger"></span>
         </div>
     </div>
-
     <div class="form-group row mb-3">
         <label asp-for="ShipType" class="col-sm-2 col-form-label"></label>
         <div class="col-sm-10">
@@ -35,69 +23,50 @@
             <span asp-validation-for="ShipType" class="text-danger"></span>
         </div>
     </div>
-
     <div class="form-group row mb-3">
         <label asp-for="Crew" class="col-sm-2 col-form-label"></label>
         <div class="col-sm-10">
-            <input asp-for="Crew" class="form-control" />
+            <input asp-for="Crew" type="number" step="1" min="0" class="form-control" />
             <span asp-validation-for="Crew" class="text-danger"></span>
         </div>
     </div>
-
     <div class="form-group row mb-3">
         <label asp-for="EnginePower" class="col-sm-2 col-form-label"></label>
         <div class="col-sm-10">
-            <input asp-for="EnginePower" class="form-control" />
+            <input asp-for="EnginePower" type="number" step="1" min="0" class="form-control" />
             <span asp-validation-for="EnginePower" class="text-danger"></span>
         </div>
     </div>
 
-    <div class="form-group row mb-3">
-        <label asp-for="Files" class="col-sm-2 col-form-label"></label>
-        <div class="col-sm-10">
-            <!-- multiple lubab valida korraga mitu uut pilti. -->
-            <input asp-for="Files" class="form-control" multiple type="file" />
-            <span asp-validation-for="Files" class="text-danger"></span>
-        </div>
+    <div class="form-group mb-3">
+        <label asp-for="Files"></label>
+        <input asp-for="Files" multiple type="file" accept=".jpg,.jpeg,.png,.gif,.webp" class="form-control" />
+        <span asp-validation-for="Files" class="text-danger"></span>
+        <div class="form-text">JPG, PNG, GIF või WEBP. Kuni 5 uut pilti, igaüks kuni 5 MB.</div>
+        <div class="form-text">Olemasolevad pildid säilivad. Vormi vea järel vali uued failid uuesti.</div>
     </div>
-
-    @if (Model.Id.HasValue)
-    {
-        <!-- Olemasoleva ID korral saadetakse vorm Update tegevusele. -->
-        <button asp-action="Update" asp-controller="Spaceship" type="submit" class="btn btn-success">
-            Update
-        </button>
-    }
-    else
-    {
-        <!-- Tühja ID korral saadetakse vorm Create tegevusele. -->
-        <button asp-action="Create" asp-controller="Spaceship" type="submit" class="btn btn-success">
-            Create
-        </button>
-    }
-
-    <a asp-action="Index" asp-controller="Spaceship" class="btn btn-secondary">Back to list</a>
+    <button type="submit" class="btn btn-success">@(Model.Id.HasValue ? "Update" : "Create")</button>
+    <a asp-action="Index" class="btn btn-secondary">Back to List</a>
 </form>
 
-@if (Model.Id.HasValue)
+@* Eraldi POST-vorm ei saada pooleliolevaid muudatusi ega vaja põhivormi valideerimist. *@
+@if (Model.Image.Count > 0)
 {
-    <!-- Pildikaardid asuvad põhivormist väljas: HTML ei luba pesastatud vorme. -->
-    <h2 class="mt-4">Saved images</h2>
-    <p data-image-delete-status class="text-success" role="status" aria-live="polite"></p>
-    <noscript>
-        <p class="text-warning">Enne pildi kustutamist salvesta vormi muudatused: ilma JavaScriptita laaditakse leht uuesti.</p>
-    </noscript>
-    <div class="row mb-3" data-image-gallery>
+    <h2 class="mt-4">Images</h2>
+    <div class="row g-3">
         @foreach (var image in Model.Image)
         {
-            <partial name="_Images" model="image" />
+            <div class="col-sm-6 col-lg-4">
+                <partial name="_Images" model="image" />
+                <form asp-controller="Spaceship" asp-action="RemoveImage" method="post" asp-antiforgery="true">
+                    <input type="hidden" name="id" value="@Model.Id" />
+                    <input type="hidden" name="imageId" value="@image.ImageId" />
+                    <button type="submit" class="btn btn-outline-danger mt-2">Remove Image</button>
+                </form>
+            </div>
         }
     </div>
 }
-
 @section Scripts {
-    <!-- Partial aktiveerib brauseripoolse jQuery valideerimise. -->
     <partial name="_ValidationScriptsPartial" />
-    <!-- Pildi kustutamine ei kaota põhivormi salvestamata teksti ega valitud uusi faile. -->
-    <script src="~/js/spaceship-images.js" asp-append-version="true"></script>
 }

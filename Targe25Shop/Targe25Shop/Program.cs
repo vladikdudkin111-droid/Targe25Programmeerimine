@@ -5,79 +5,80 @@ using TARge25Shop.Data;
 
 namespace TARge25Shop
 {
-    // Program seadistab teenused, andmebaasi ja HTTP päringute töötlusahela.
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
-            // Builder loeb konfiguratsiooni ja valmistab ette veebirakenduse.
             var builder = WebApplication.CreateBuilder(args);
 
-            // MVC teenused võimaldavad kasutada Controllereid ja Razor vaateid.
+            // Registreerime MVC ning ühe HTTP päringu piires kasutatavad teenused.
             builder.Services.AddControllersWithViews();
-
-            // Registreerime rakenduse teenused dependency injection konteineris.
             builder.Services.AddScoped<ISpaceshipServices, SpaceshipServices>();
             builder.Services.AddScoped<IFileServices, FileServices>();
-
-            // RealEstate CRUD teenus kasutab sama kihilist ülesehitust.
             builder.Services.AddScoped<IRealEstateServices, RealEstateServices>();
 
-            // Ühenduse string peab olema appsettings.json failis määratud.
-            var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-                ?? throw new InvalidOperationException(
-                    "Connection string 'DefaultConnection' was not found.");
-
-            // Registreerime Entity Framework DbContexti ja SQL Serveri ühenduse.
-            builder.Services.AddDbContext<TARge25ShopContext>(options =>
-                options.UseSqlServer(
-                    connectionString,
-                    sqlServerOptions => sqlServerOptions.EnableRetryOnFailure(
-                        maxRetryCount: 5,
-                        maxRetryDelay: TimeSpan.FromSeconds(10),
-                        errorNumbersToAdd: null)));
-
-            // Ehitame valmis veebirakenduse.
-            var app = builder.Build();
-
-            // Rakendame olemasolevad migratsioonid automaatselt enne esimest päringut.
-            // Olemasoleva andmebaasi migratsiooniajalugu peab sobima selle projekti migratsioonidega.
-            using (var scope = app.Services.CreateScope())
+            // Ühendusstring määrab nii SQL Serveri eksemplari kui ka andmebaasi nime.
+            var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+            if (string.IsNullOrWhiteSpace(connectionString))
             {
-                var context = scope.ServiceProvider.GetRequiredService<TARge25ShopContext>();
-                context.Database.Migrate();
+                throw new InvalidOperationException(
+                    "ConnectionStrings:DefaultConnection puudub. Kontrolli veebiprojekti appsettings.json faili.");
             }
 
-            // Production keskkonnas kasutame üldist vealehte ja HSTS-i.
+            // Korduskatsed aitavad ajutise katkestuse korral, näiteks LocalDB käivitumisel.
+            // Need ei asenda LocalDB paigaldamist ega andmebaasi migratsioonide rakendamist.
+            builder.Services.AddDbContext<TARge25ShopContext>(options =>
+                options.UseSqlServer(connectionString, sqlOptions =>
+                    sqlOptions.EnableRetryOnFailure(
+                        maxRetryCount: 3,
+                        maxRetryDelay: TimeSpan.FromSeconds(2),
+                        errorNumbersToAdd: null)));
+
+            var app = builder.Build();
+
+            // Arenduskeskkonnas loome puuduva andmebaasi ja rakendame olemasolevad migratsioonid.
+            // Valmistame tabelid ette enne esimese Spaceship või RealEstate lehe avamist.
+            if (app.Environment.IsDevelopment())
+            {
+                await using var scope = app.Services.CreateAsyncScope();
+                var context = scope.ServiceProvider.GetRequiredService<TARge25ShopContext>();
+                try
+                {
+                    await context.Database.MigrateAsync();
+                }
+                catch (Exception exception)
+                {
+                    // Säilitame algse vea koos InnerExceptioniga, et SQL Serveri tõrke põhjus oleks nähtav.
+                    app.Logger.LogCritical(exception,
+                        "Andmebaasi ettevalmistamine ebaõnnestus. Kontrolli LocalDB olekut, " +
+                        "DefaultConnection ühendust ja sisemist SQL Serveri veateadet. " +
+                        "Juhised asuvad failis START_AND_DATABASE_FIX.md.");
+                    throw;
+                }
+            }
+
+            // Tootmiskeskkonnas kasutame üldist vealehte ja HTTPS-i turvapäist.
             if (!app.Environment.IsDevelopment())
             {
                 app.UseExceptionHandler("/Home/Error");
                 app.UseHsts();
             }
 
-            // Suuname HTTP päringud turvalisele HTTPS ühendusele.
+            // Suuname HTTPS-i ning seome päringud kontrollerite tegevustega.
             app.UseHttpsRedirection();
-
-            // UseStaticFiles teenindab ka rakenduse töö ajal üleslaaditud pilte.
+            // Teenindame ka pärast rakenduse käivitamist üles laaditud pilte.
             app.UseStaticFiles();
-
-            // Aktiveerime routing süsteemi.
             app.UseRouting();
-
-            // Aktiveerime autoriseerimise middleware'i.
             app.UseAuthorization();
 
-            // MapStaticAssets teenindab buildi ajal teadaolevaid staatilisi faile.
+            // Avaldame staatilised ressursid ja MVC vaikemarsruudi.
             app.MapStaticAssets();
-
-            // Määrame MVC vaikimisi route'i.
             app.MapControllerRoute(
                 name: "default",
                 pattern: "{controller=Home}/{action=Index}/{id?}")
                 .WithStaticAssets();
 
-            // Käivitame rakenduse ja alustame HTTP päringute vastuvõtmist.
-            app.Run();
+            await app.RunAsync();
         }
     }
 }

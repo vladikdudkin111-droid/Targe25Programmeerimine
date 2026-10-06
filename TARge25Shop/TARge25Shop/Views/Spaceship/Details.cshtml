@@ -1,52 +1,28 @@
 @model TARge25Shop.Models.Spaceship.SpaceshipDetailsViewModel
-
-@{
-    // Lehe pealkiri kuvatakse ka ühises Layout vaates.
-    ViewData["Title"] = "Spaceship details";
-    // Details vaates võib kustutada üksikuid pilte ja jääda samale lehele.
-    ViewData["AllowImageRemoval"] = true;
-    ViewData["ImageDeleteReturnToDetails"] = true;
-}
-
 <h1>Details</h1>
-
-<!-- Definition list seob iga välja nimetuse selle väärtusega. -->
+<h4>Spaceship</h4>
 <dl class="row">
     <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Id)</dt>
     <dd class="col-sm-9">@Html.DisplayFor(model => model.Id)</dd>
-
     <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Name)</dt>
     <dd class="col-sm-9">@Html.DisplayFor(model => model.Name)</dd>
-
     <dt class="col-sm-3">@Html.DisplayNameFor(model => model.ShipType)</dt>
     <dd class="col-sm-9">@Html.DisplayFor(model => model.ShipType)</dd>
-
     <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Crew)</dt>
     <dd class="col-sm-9">@Html.DisplayFor(model => model.Crew)</dd>
-
     <dt class="col-sm-3">@Html.DisplayNameFor(model => model.EnginePower)</dt>
     <dd class="col-sm-9">@Html.DisplayFor(model => model.EnginePower)</dd>
-
     <dt class="col-sm-3">@Html.DisplayNameFor(model => model.CreatedAt)</dt>
     <dd class="col-sm-9">@Html.DisplayFor(model => model.CreatedAt)</dd>
-
     <dt class="col-sm-3">@Html.DisplayNameFor(model => model.UpdatedAt)</dt>
     <dd class="col-sm-9">@Html.DisplayFor(model => model.UpdatedAt)</dd>
 </dl>
-
-<!-- Iga salvestatud pilt kuvatakse eraldi _Images partiali abil. -->
-<p data-image-delete-status class="text-success" role="status" aria-live="polite"></p>
-<div class="row mb-3" data-image-gallery>
+@* Sama pildi osavaade teenindab üksikasjade ja kustutamise lehte. *@
+<div class="row g-3 mb-3">
     @foreach (var image in Model.Image)
     {
-        <partial name="_Images" model="image" />
+        <div class="col-sm-6 col-lg-4"><partial name="_Images" model="image" /></div>
     }
 </div>
-
 <a asp-action="Update" asp-route-id="@Model.Id" class="btn btn-primary">Update</a>
-<a asp-action="Index" class="btn btn-secondary">Back to list</a>
-
-@section Scripts {
-    <!-- Sama skript teenindab piltide kustutamist ka muutmise vaates. -->
-    <script src="~/js/spaceship-images.js" asp-append-version="true"></script>
-}
+<a asp-action="Index" class="btn btn-secondary">Back</a>

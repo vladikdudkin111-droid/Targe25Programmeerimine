@@ -1,0 +1,14 @@
+@model TARge25Shop.Models.RealEstate.RealEstateImageViewModel
+<div class="card">
+    @* Image sisaldab sobiva MIME-tüübiga Base64-andmeaadressi. *@
+    @if (!string.IsNullOrEmpty(Model.Image))
+    {
+        <img src="@Model.Image" class="card-img-top" alt="@Model.ImageTitle"
+             style="max-height: 260px; object-fit: contain;" />
+    }
+    <div class="card-body">
+        <p class="card-text text-break">@Model.ImageTitle</p>
+        <a asp-controller="RealEstate" asp-action="DownloadImage" asp-route-imageId="@Model.ImageId"
+           class="btn btn-sm btn-outline-primary">Download</a>
+    </div>
+</div>

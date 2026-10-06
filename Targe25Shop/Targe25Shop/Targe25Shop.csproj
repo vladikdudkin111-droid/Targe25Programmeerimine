@@ -17,8 +17,10 @@
   <ItemGroup>
     <ProjectReference Include="..\TARge25Shop.ApplicationServices\TARge25Shop.ApplicationServices.csproj" />
     <ProjectReference Include="..\TARge25Shop.Core\TARge25Shop.Core.csproj" />
-    <!-- Veebiprojekt kasutab Controlleris ja Programis otse TARge25ShopContext klassi. -->
-    <ProjectReference Include="..\TARge25Shop.Data\TARge25Shop.Data.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="wwwroot\multipleFileUpload\" />
   </ItemGroup>
 
 </Project>

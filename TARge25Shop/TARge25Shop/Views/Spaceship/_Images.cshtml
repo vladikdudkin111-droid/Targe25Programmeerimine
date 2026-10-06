@@ -1,33 +1,13 @@
 @model TARge25Shop.Models.Spaceship.ImageViewModel
-
 @{
-    // Failinimi lisatakse wwwroot/multipleFileUpload avalikule veebiteele.
-    // Puuduva failinime korral kasutatakse õpetaja näite järgi noimage.jpg nime.
-    var photoPath = "~/multipleFileUpload/" + (Model.FilePath ?? "noimage.jpg");
-    // Põhivaade otsustab, kas pildil on eraldi kustutamise nupp.
-    var allowImageRemoval = ViewData["AllowImageRemoval"] is true;
-    var returnToDetails = ViewData["ImageDeleteReturnToDetails"] is true;
+    // Kasutame salvestatud failinime, et moodustada wwwroot suhteline aadress.
+    var photoPath = "~/multipleFileUpload/" + Model.FilePath;
 }
-
-<!-- Partial kuvab ühe üleslaaditud faili nime ja pildi. -->
-<div class="col-sm-4 mb-3" data-image-card>
-    <div class="card h-100">
-        <img class="card-img-top" src="@photoPath" asp-append-version="true" alt="Spaceship image" />
-        <div class="card-body">
-            <small class="text-muted">@Model.FilePath</small>
-            @if (allowImageRemoval && Model.SpaceshipId.HasValue)
-            {
-                <!-- Igal pildil on oma POST vorm koos CSRF kaitsetokeniga. -->
-                <form asp-action="RemoveImage" asp-controller="Spaceship"
-                      method="post" asp-antiforgery="true" class="mt-2" data-image-delete-form>
-                    <!-- Server saab pildi ja kosmoselaeva ID, kuid mitte usaldamata failiteed. -->
-                    <input type="hidden" name="imageId" value="@Model.ImageId" />
-                    <input type="hidden" name="spaceshipId" value="@Model.SpaceshipId" />
-                    <input type="hidden" name="returnToDetails" value="@(returnToDetails ? "true" : "false")" />
-                    <button type="submit" class="btn btn-sm btn-outline-danger">Delete image</button>
-                    <p class="text-danger mt-2 mb-0" data-image-delete-error role="alert"></p>
-                </form>
-            }
-        </div>
-    </div>
+<div class="card">
+    @if (!string.IsNullOrEmpty(Model.FilePath))
+    {
+        <img src="@photoPath" asp-append-version="true" class="card-img-top"
+             alt="Spaceship image" style="max-height: 260px; object-fit: contain;" />
+    }
+    <div class="card-body"><p class="card-text text-break">@Model.FilePath</p></div>
 </div>

@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -6,8 +6,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
-  <!-- FrameworkReference annab DTO-dele IFormFile tüübi ilma vana ASP.NET Core 2.3 paketita. -->
   <ItemGroup>
+    <!-- IFormFile kasutab projekti sihtraamistikuga sama ASP.NET Core versiooni. -->
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 

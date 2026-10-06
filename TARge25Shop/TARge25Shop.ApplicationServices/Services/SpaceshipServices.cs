@@ -6,102 +6,71 @@ using TARge25Shop.Data;
 
 namespace TARge25Shop.ApplicationServices.Services
 {
-    // SpaceshipServices sisaldab kosmoselaevade põhilist äriloogikat.
+    // Teenus juhib andmete ja seotud piltide loomist, muutmist ning kustutamist.
     public class SpaceshipServices : ISpaceshipServices
     {
-        // DbContext annab ligipääsu andmebaasi tabelitele.
         private readonly TARge25ShopContext _context;
-
-        // Failiteenus salvestab ja kustutab kosmoselaevaga seotud failid.
         private readonly IFileServices _fileServices;
 
-        // Konstruktor saab vajalikud sõltuvused dependency injection konteinerist.
         public SpaceshipServices(TARge25ShopContext context, IFileServices fileServices)
         {
             _context = context;
             _fileServices = fileServices;
         }
 
-        // CREATE - loob uue kosmoselaeva ja salvestab selle koos failidega.
         public async Task<Spaceship> Create(SpaceshipDto dto)
         {
-            // Teisendame DTO andmed uueks Domain objektiks.
-            var spaceship = new Spaceship
-            {
-                Id = Guid.NewGuid(),
-                Name = dto.Name,
-                ShipType = dto.ShipType,
-                Crew = dto.Crew,
-                EnginePower = dto.EnginePower,
-                CreatedAt = DateTime.Now,
-                UpdatedAt = DateTime.Now
-            };
-
-            // Lisame failid samasse DbContexti, et üks SaveChanges salvestaks kõik kirjed.
+            // Uue objekti ID ja kuupäevad määrab server.
+            Spaceship spaceship = new();
+            spaceship.Id = Guid.NewGuid();
+            spaceship.Name = dto.Name.Trim();
+            spaceship.ShipType = dto.ShipType.Trim();
+            spaceship.Crew = dto.Crew;
+            spaceship.EnginePower = dto.EnginePower;
+            spaceship.CreatedAt = DateTime.Now;
+            spaceship.UpdatedAt = spaceship.CreatedAt;
             _fileServices.FilesToApi(dto, spaceship);
             _context.Spaceships.Add(spaceship);
             await _context.SaveChangesAsync();
-
             return spaceship;
         }
 
-        // UPDATE - muudab olemasolevat kosmoselaeva ja lisab uued failid.
-        public async Task<Spaceship> Update(SpaceshipDto dto)
+        public async Task<Spaceship?> Update(SpaceshipDto dto)
         {
-            // Update vajab olemasoleva kirje ID-d.
-            if (!dto.Id.HasValue)
-            {
-                throw new InvalidOperationException("Spaceship ID is required for update.");
-            }
+            if (!dto.Id.HasValue || dto.Id.Value == Guid.Empty) return null;
+            var spaceship = await _context.Spaceships.FirstOrDefaultAsync(x => x.Id == dto.Id.Value);
+            if (spaceship == null) return null;
 
-            // Loeme olemasoleva jälgitava objekti andmebaasist.
-            var spaceship = await _context.Spaceships
-                .FirstOrDefaultAsync(item => item.Id == dto.Id.Value);
-
-            if (spaceship == null)
-            {
-                throw new InvalidOperationException("Spaceship not found.");
-            }
-
-            // Muudame ainult kasutaja poolt redigeeritavaid välju.
-            spaceship.Name = dto.Name;
-            spaceship.ShipType = dto.ShipType;
+            // Muudame jälgitavat kirjet; CreatedAt jääb andmebaasis säilinud väärtuseks.
+            spaceship.Name = dto.Name.Trim();
+            spaceship.ShipType = dto.ShipType.Trim();
             spaceship.Crew = dto.Crew;
             spaceship.EnginePower = dto.EnginePower;
             spaceship.UpdatedAt = DateTime.Now;
-
-            // Lisame muutmise vormil valitud uued failid.
+            // Uued pildid lisanduvad olemasolevatele.
             _fileServices.FilesToApi(dto, spaceship);
             await _context.SaveChangesAsync();
-
             return spaceship;
         }
 
-        // DETAILS - tagastab ühe kosmoselaeva ID järgi.
         public async Task<Spaceship?> DetailAsync(Guid id)
         {
-            return await _context.Spaceships
-                .FirstOrDefaultAsync(item => item.Id == id);
+            return await _context.Spaceships.FirstOrDefaultAsync(x => x.Id == id);
         }
 
-        // DELETE - kustutab kosmoselaeva, selle failikirjed ja füüsilised failid.
         public async Task<Spaceship?> Delete(Guid id)
         {
-            // Otsime kustutatava kosmoselaeva.
-            var spaceship = await _context.Spaceships
-                .FirstOrDefaultAsync(item => item.Id == id);
-
-            // Puuduva kirje korral tagastame null ja väldime Remove(null) viga.
-            if (spaceship == null)
-            {
-                return null;
-            }
-
-            // Eemaldame seotud failid enne kosmoselaeva andmebaasikirjet.
-            _fileServices.DeleteFiles(id);
+            var spaceship = await _context.Spaceships.FirstOrDefaultAsync(x => x.Id == id);
+            if (spaceship == null) return null;
+            // Eemaldame kettalt failid ja märgime nende kirjed kustutatuks.
+            var images = await _context.FileToApis.Where(x => x.SpaceshipId == id)
+                .Select(x => new FileToApiDto
+                {
+                    Id = x.Id, SpaceshipId = x.SpaceshipId, ExistingFilePath = x.ExistingFilePath
+                }).ToArrayAsync();
+            await _fileServices.RemoveImagesFromApi(images);
             _context.Spaceships.Remove(spaceship);
             await _context.SaveChangesAsync();
-
             return spaceship;
         }
     }

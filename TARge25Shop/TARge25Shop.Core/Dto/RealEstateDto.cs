@@ -1,15 +1,20 @@
+using Microsoft.AspNetCore.Http;
+
 namespace TARge25Shop.Core.Dto
 {
-    // DTO viib vormi andmed Controllerist ApplicationServices kihti.
     public class RealEstateDto
     {
-        // Loomisel on Id tühi; muutmisel sisaldab see olemasoleva kirje tunnust.
         public Guid? Id { get; set; }
+        public double? Area { get; set; }
+        public string Location { get; set; } = string.Empty;
+        public int RoomNumber { get; set; }
+        public string BuildingType { get; set; } = string.Empty;
 
-        // Kasutaja muudetavad kinnisvara andmed.
-        public string Address { get; set; } = string.Empty;
-        public decimal Area { get; set; }
-        public int RoomCount { get; set; }
-        public decimal Price { get; set; }
+        public List<IFormFile> Files { get; set; } = new();
+        public IEnumerable<FileToDatabaseDto> Image { get; set; }
+            = new List<FileToDatabaseDto>();
+
+        public DateTime? CreatedAt { get; set; }
+        public DateTime? ModifiedAt { get; set; }
     }
 }

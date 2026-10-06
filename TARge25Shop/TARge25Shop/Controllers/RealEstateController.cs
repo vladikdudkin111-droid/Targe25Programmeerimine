@@ -2,211 +2,201 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TARge25Shop.Core.Dto;
 using TARge25Shop.Core.ServiceInterface;
+using TARge25Shop.Core.Validation;
 using TARge25Shop.Data;
 using TARge25Shop.Models.RealEstate;
 
 namespace TARge25Shop.Controllers
 {
-    // Controller seob kinnisvara vaated teenustega, nagu SpaceshipController.
+    // Kontroller kontrollib vormi ning ühendab vaated CRUD- ja failiteenustega.
     public class RealEstateController : Controller
     {
-        private readonly IRealEstateServices _realEstateServices;
+        private readonly IRealEstateServices _service;
+        private readonly IFileServices _fileServices;
         private readonly TARge25ShopContext _context;
 
-        // Dependency injection annab CRUD teenuse ja andmebaasikonteksti.
-        public RealEstateController(IRealEstateServices realEstateServices,
-            TARge25ShopContext context)
+        public RealEstateController(IRealEstateServices service, TARge25ShopContext context, IFileServices fileServices)
         {
-            _realEstateServices = realEstateServices;
+            _service = service;
             _context = context;
+            _fileServices = fileServices;
         }
 
-        // INDEX - loeb kõik kinnisvaraobjektid ning teisendab need tabeli ridadeks.
         [HttpGet]
         public async Task<IActionResult> Index()
         {
-            // Lugemisvaade ei vaja Entity Frameworki muudatuste jälgimist.
-            var result = await _context.RealEstates.AsNoTracking()
-                .OrderBy(item => item.CreatedAt)
-                .Select(item => new RealEstateIndexViewModel
+            // Vaade saab valmis loendi, mitte veel täitmata andmebaasipäringu.
+            var result = await _context.RealEstates.AsNoTracking().OrderBy(x => x.CreatedAt)
+                .Select(x => new RealEstateIndexViewModel
                 {
-                    Id = item.Id,
-                    Address = item.Address,
-                    Area = item.Area,
-                    RoomCount = item.RoomCount,
-                    Price = item.Price,
-                    CreatedAt = item.CreatedAt,
-                    UpdatedAt = item.UpdatedAt
-                })
-                .ToListAsync();
+                    Id = x.Id,
+                    Area = x.Area,
+                    Location = x.Location,
+                    RoomNumber = x.RoomNumber,
+                    BuildingType = x.BuildingType
+                }).ToListAsync();
             return View(result);
         }
 
-        // CREATE GET - avab tühja ühise loomise ja muutmise vormi.
         [HttpGet]
-        public IActionResult Create()
-        {
-            return View("CreateUpdate", new RealEstateCreateUpdateViewModel());
-        }
+        public IActionResult Create() => View("CreateUpdate", new RealEstateCreateUpdateViewModel());
 
-        // CREATE POST - kontrollib vormi ning loob uue objekti.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
+        [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(RealEstateCreateUpdateViewModel vm)
         {
-            // Loomise ID määrab teenus; vormist saadetud Id ei vali muutmise režiimi.
+            // Loomisel määrab ID teenus, mitte kasutaja peidetud vormiväli.
             vm.Id = null;
             ModelState.Remove(nameof(vm.Id));
-            ValidateForm(vm);
-            if (!ModelState.IsValid)
-            {
-                return View("CreateUpdate", vm);
-            }
-
-            await _realEstateServices.Create(ToDto(vm));
+            ValidateFiles(vm);
+            if (!ModelState.IsValid) return View("CreateUpdate", vm);
+            await _service.Create(ToDto(vm));
             return RedirectToAction(nameof(Index));
         }
 
-        // UPDATE GET - loeb olemasoleva objekti andmed muutmise vormi.
         [HttpGet]
         public async Task<IActionResult> Update(Guid id)
         {
-            var realEstate = await _realEstateServices.DetailAsync(id);
-            if (realEstate == null)
-            {
-                return NotFound();
-            }
-
+            var entity = await _service.DetailAsync(id);
+            if (entity == null) return NotFound();
             var vm = new RealEstateCreateUpdateViewModel
             {
-                Id = realEstate.Id,
-                Address = realEstate.Address,
-                Area = realEstate.Area,
-                RoomCount = realEstate.RoomCount,
-                Price = realEstate.Price
+                Id = entity.Id,
+                Area = entity.Area,
+                Location = entity.Location,
+                RoomNumber = entity.RoomNumber,
+                BuildingType = entity.BuildingType,
+                CreatedAt = entity.CreatedAt,
+                ModifiedAt = entity.ModifiedAt
             };
+            vm.Image.AddRange(await FileFromDatabase(id));
             return View("CreateUpdate", vm);
         }
 
-        // UPDATE POST - salvestab kinnisvara muudetud väljad.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
+        [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Update(RealEstateCreateUpdateViewModel vm)
         {
-            if (!vm.Id.HasValue || vm.Id.Value == Guid.Empty)
-            {
-                return BadRequest();
-            }
-
-            if (await _realEstateServices.DetailAsync(vm.Id.Value) == null)
-            {
-                return NotFound();
-            }
-
-            ValidateForm(vm);
+            if (!vm.Id.HasValue || vm.Id.Value == Guid.Empty) return BadRequest();
+            if (await _service.DetailAsync(vm.Id.Value) == null) return NotFound();
+            ValidateFiles(vm);
             if (!ModelState.IsValid)
             {
-                // Vigase vormi korral säilitame sisestatud väärtused ja näitame veateateid.
+                // Valideerimisvea järel taastame galerii andmebaasist.
+                vm.Image = await FileFromDatabase(vm.Id.Value);
                 return View("CreateUpdate", vm);
             }
-
-            var updated = await _realEstateServices.Update(ToDto(vm));
-            if (updated == null)
-            {
-                return NotFound();
-            }
+            var result = await _service.Update(ToDto(vm));
+            if (result == null) return NotFound();
             return RedirectToAction(nameof(Index));
         }
 
-        // DETAILS - kuvab ühe objekti põhiandmed ja kuupäevad.
         [HttpGet]
         public async Task<IActionResult> Details(Guid id)
         {
-            var realEstate = await _realEstateServices.DetailAsync(id);
-            if (realEstate == null)
-            {
-                return NotFound();
-            }
-
+            var entity = await _service.DetailAsync(id);
+            if (entity == null) return NotFound();
             var vm = new RealEstateDetailsViewModel
             {
-                Id = realEstate.Id,
-                Address = realEstate.Address,
-                Area = realEstate.Area,
-                RoomCount = realEstate.RoomCount,
-                Price = realEstate.Price,
-                CreatedAt = realEstate.CreatedAt,
-                UpdatedAt = realEstate.UpdatedAt
+                Id = entity.Id,
+                Area = entity.Area,
+                Location = entity.Location,
+                RoomNumber = entity.RoomNumber,
+                BuildingType = entity.BuildingType,
+                CreatedAt = entity.CreatedAt,
+                ModifiedAt = entity.ModifiedAt
             };
+            vm.Image.AddRange(await FileFromDatabase(id));
             return View(vm);
         }
 
-        // DELETE GET - näitab kinnitamise lehte; GET päring ise midagi ei kustuta.
         [HttpGet]
         public async Task<IActionResult> Delete(Guid id)
         {
-            var realEstate = await _realEstateServices.DetailAsync(id);
-            if (realEstate == null)
-            {
-                return NotFound();
-            }
-
+            // GET näitab ainult kinnitust; kustutamine toimub POST-päringuga.
+            var entity = await _service.DetailAsync(id);
+            if (entity == null) return NotFound();
             var vm = new RealEstateDeleteViewModel
             {
-                Id = realEstate.Id,
-                Address = realEstate.Address,
-                Area = realEstate.Area,
-                RoomCount = realEstate.RoomCount,
-                Price = realEstate.Price,
-                CreatedAt = realEstate.CreatedAt,
-                UpdatedAt = realEstate.UpdatedAt
+                Id = entity.Id,
+                Area = entity.Area,
+                Location = entity.Location,
+                RoomNumber = entity.RoomNumber,
+                BuildingType = entity.BuildingType,
+                CreatedAt = entity.CreatedAt,
+                ModifiedAt = entity.ModifiedAt
             };
+            vm.Image.AddRange(await FileFromDatabase(id));
             return View(vm);
         }
 
-        // DELETE POST - kustutab kasutaja kinnitatud objekti.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
+        [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmation(Guid id)
         {
-            if (!ModelState.IsValid || id == Guid.Empty)
-            {
-                return BadRequest();
-            }
-
-            var deleted = await _realEstateServices.Delete(id);
-            if (deleted == null)
-            {
-                return NotFound();
-            }
+            if (!ModelState.IsValid || id == Guid.Empty) return BadRequest();
+            var result = await _service.Delete(id);
+            if (result == null) return NotFound();
             return RedirectToAction(nameof(Index));
         }
 
-        // Teisendame vormi muudetavad väljad teenusele edastatavaks DTO-ks.
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> RemoveImage(Guid id, Guid imageId)
+        {
+            if (!ModelState.IsValid || id == Guid.Empty || imageId == Guid.Empty) return BadRequest();
+            if (await _service.DetailAsync(id) == null) return NotFound();
+            var removed = await _fileServices.RemoveImageFromDatabase(new FileToDatabaseDto
+            {
+                Id = imageId, RealEstateId = id
+            });
+            if (removed == null) return NotFound();
+            // Ühe pildi eemaldamise järel jääme sama objekti muutmise lehele.
+            return RedirectToAction(nameof(Update), new { id });
+        }
+
         private static RealEstateDto ToDto(RealEstateCreateUpdateViewModel vm)
         {
+            // Serveri kuupäevi ja salvestatud failiteid vormist üle ei kirjutata.
             return new RealEstateDto
             {
                 Id = vm.Id,
-                Address = vm.Address,
                 Area = vm.Area,
-                RoomCount = vm.RoomCount,
-                Price = vm.Price
+                Location = vm.Location,
+                RoomNumber = vm.RoomNumber,
+                BuildingType = vm.BuildingType,
+                Files = vm.Files ?? new()
             };
         }
 
-        // Täiendavad kontrollid käivitatakse serveris ka siis, kui brauseri kontroll puudub.
-        private void ValidateForm(RealEstateCreateUpdateViewModel vm)
+        private void ValidateFiles(RealEstateCreateUpdateViewModel vm)
         {
-            // Andmebaas salvestab kaks kümnendkohta; väldime vaikset ümardamist.
-            if (vm.Area != decimal.Round(vm.Area, 2))
+            var error = ImageUploadRules.Validate(vm.Files);
+            if (error != null) ModelState.AddModelError(nameof(vm.Files), error);
+        }
+
+        // Tagastame kõigi selle kinnisvara piltide loendi, mitte ühe pildi.
+        private async Task<List<RealEstateImageViewModel>> FileFromDatabase(Guid id)
+        {
+            var files = await _context.FileToDatabases.AsNoTracking()
+                .Where(x => x.RealEstateId == id).OrderBy(x => x.ImageTitle).ToListAsync();
+
+            // Base64 teisendamine toimub pärast andmete lugemist C# mälus.
+            return files.Select(y => new RealEstateImageViewModel
             {
-                ModelState.AddModelError(nameof(vm.Area), "Pindalal võib olla kuni kaks kümnendkohta.");
-            }
-            if (vm.Price != decimal.Round(vm.Price, 2))
-            {
-                ModelState.AddModelError(nameof(vm.Price), "Hinnal võib olla kuni kaks kümnendkohta.");
-            }
+                ImageId = y.Id,
+                ImageTitle = y.ImageTitle,
+                ImageData = y.ImageData,
+                RealEstateId = y.RealEstateId,
+                Image = y.ImageData is { Length: > 0 } && ImageUploadRules.ContentType(y.ImageTitle) is string mime
+                    ? string.Format("data:{0};base64,{1}", mime, Convert.ToBase64String(y.ImageData))
+                    : null
+            }).ToList();
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> DownloadImage(Guid imageId)
+        {
+            var image = await _context.FileToDatabases.AsNoTracking().FirstOrDefaultAsync(x => x.Id == imageId);
+            if (image?.ImageData == null) return NotFound();
+            var fileName = Path.GetFileName((image.ImageTitle ?? "image").Replace('\\', '/'));
+            return File(image.ImageData, "application/octet-stream", string.IsNullOrEmpty(fileName) ? "image" : fileName);
         }
     }
 }
