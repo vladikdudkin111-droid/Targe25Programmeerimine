@@ -10,7 +10,7 @@
 
 <div class="row">
     <div class="col-md-6">
-        <form asp-controller="Kindergarten" asp-action="@action" asp-route-id="@(isUpdate ? Model.Id.ToString() : null)" method="post">
+        <form asp-controller="Kindergarten" asp-action="@action" asp-route-id="@(isUpdate ? Model.Id.ToString() : null)" method="post" enctype="multipart/form-data">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <input asp-for="Id" type="hidden" />
 
@@ -36,11 +36,26 @@
             </div>
 
             @* Kuupäevad määrab teenus automaatselt. *@
+            <div class="mb-3">
+                <label asp-for="Files" class="form-label"></label>
+                <input asp-for="Files" type="file" multiple accept=".jpg,.jpeg,.png,.gif,.webp" class="form-control" aria-describedby="image-help" />
+                <div id="image-help" class="form-text">JPG, PNG, GIF or WebP. Up to 10 images per upload, 5 MB each, 20 MB total. Existing images are kept.</div>
+                <span asp-validation-for="Files" class="text-danger"></span>
+                @if (ViewData.ModelState.ErrorCount > 0)
+                {
+                    <div class="form-text">Please select your new images again before saving.</div>
+                }
+            </div>
             <button type="submit" class="btn btn-primary">@action</button>
             <a asp-action="Index" class="btn btn-secondary">Back to list</a>
         </form>
     </div>
 </div>
+
+@if (isUpdate)
+{
+    <partial name="_Images" model="Model.Gallery" />
+}
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />

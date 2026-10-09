@@ -12,5 +12,7 @@ namespace TARge25Shop.Core.Domain
         // Loomise ja viimase muutmise aja määrab teenus.
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
+
+        public ICollection<KindergartenImage> Images { get; set; } = new List<KindergartenImage>();
     }
 }

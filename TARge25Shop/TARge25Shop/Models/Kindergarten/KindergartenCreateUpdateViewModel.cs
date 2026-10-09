@@ -25,5 +25,10 @@ namespace TARge25Shop.Models.Kindergarten
         [StringLength(100, ErrorMessage = "Õpetaja nimi võib olla kuni 100 märki pikk.")]
         [Display(Name = "Teacher name")]
         public string TeacherName { get; set; } = string.Empty;
+
+        [Display(Name = "Add images")]
+        public List<IFormFile> Files { get; set; } = [];
+
+        public KindergartenImagesViewModel Gallery { get; set; } = new();
     }
 }

@@ -12,5 +12,7 @@ namespace TARge25Shop.Models.Kindergarten
         // Loomise ja viimase muutmise aja määrab teenus.
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
+
+        public KindergartenImagesViewModel Gallery { get; set; } = new();
     }
 }

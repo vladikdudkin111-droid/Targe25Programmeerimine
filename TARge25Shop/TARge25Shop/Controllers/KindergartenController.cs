@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TARge25Shop.Core.Dto;
@@ -12,13 +13,16 @@ namespace TARge25Shop.Controllers
     {
         private readonly IKindergartenServices _kindergartenServices;
         private readonly TARge25ShopContext _context;
+        private readonly IFileService _fileService;
 
         public KindergartenController(
             IKindergartenServices kindergartenServices,
-            TARge25ShopContext context)
+            TARge25ShopContext context,
+            IFileService fileService)
         {
             _kindergartenServices = kindergartenServices;
             _context = context;
+            _fileService = fileService;
         }
 
         // INDEX - kuvab lasteaiarühmade nimekirja.
@@ -52,6 +56,8 @@ namespace TARge25Shop.Controllers
         // CREATE POST - kontrollib andmeid ja loob uue rühma.
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [RequestSizeLimit(FileUploadDto.MaxRequestSize)]
+        [RequestFormLimits(MultipartBodyLengthLimit = FileUploadDto.MaxRequestSize)]
         public async Task<IActionResult> Create(KindergartenCreateUpdateViewModel vm)
         {
             // Loomisel ei kasutata brauserist saadetud ID-d.
@@ -62,7 +68,17 @@ namespace TARge25Shop.Controllers
                 return View("CreateUpdate", vm);
             }
 
-            await _kindergartenServices.Create(ToDto(vm));
+            try
+            {
+                var dto = ToDto(vm);
+                dto.Files = await ReadFilesAsync(vm.Files);
+                await _kindergartenServices.Create(dto);
+            }
+            catch (ValidationException exception)
+            {
+                ModelState.AddModelError(nameof(vm.Files), exception.Message);
+                return View("CreateUpdate", vm);
+            }
             return RedirectToAction(nameof(Index));
         }
 
@@ -85,7 +101,8 @@ namespace TARge25Shop.Controllers
                 KindergartenName = kindergarten.KindergartenName,
                 TeacherName = kindergarten.TeacherName,
                 CreatedAt = kindergarten.CreatedAt,
-                UpdatedAt = kindergarten.UpdatedAt
+                UpdatedAt = kindergarten.UpdatedAt,
+                Gallery = await LoadGalleryAsync(id)
             };
             return View(vm);
         }
@@ -106,7 +123,8 @@ namespace TARge25Shop.Controllers
                 GroupName = kindergarten.GroupName,
                 ChildrenCount = kindergarten.ChildrenCount,
                 KindergartenName = kindergarten.KindergartenName,
-                TeacherName = kindergarten.TeacherName
+                TeacherName = kindergarten.TeacherName,
+                Gallery = await LoadGalleryAsync(id, allowDelete: true)
             };
             return View("CreateUpdate", vm);
         }
@@ -114,6 +132,8 @@ namespace TARge25Shop.Controllers
         // UPDATE POST - salvestab kehtivad muudatused.
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [RequestSizeLimit(FileUploadDto.MaxRequestSize)]
+        [RequestFormLimits(MultipartBodyLengthLimit = FileUploadDto.MaxRequestSize)]
         public async Task<IActionResult> Update([FromRoute] Guid id, KindergartenCreateUpdateViewModel vm)
         {
             // Aadressi ja vormi ID peavad viitama samale kirjele.
@@ -129,13 +149,25 @@ namespace TARge25Shop.Controllers
 
             if (!ModelState.IsValid)
             {
+                vm.Gallery = await LoadGalleryAsync(id, allowDelete: true);
                 return View("CreateUpdate", vm);
             }
 
-            var updated = await _kindergartenServices.Update(ToDto(vm));
-            if (updated == null)
+            try
             {
-                return NotFound();
+                var dto = ToDto(vm);
+                dto.Files = await ReadFilesAsync(vm.Files);
+                var updated = await _kindergartenServices.Update(dto);
+                if (updated == null)
+                {
+                    return NotFound();
+                }
+            }
+            catch (ValidationException exception)
+            {
+                ModelState.AddModelError(nameof(vm.Files), exception.Message);
+                vm.Gallery = await LoadGalleryAsync(id, allowDelete: true);
+                return View("CreateUpdate", vm);
             }
 
             return RedirectToAction(nameof(Index));
@@ -160,7 +192,8 @@ namespace TARge25Shop.Controllers
                 KindergartenName = kindergarten.KindergartenName,
                 TeacherName = kindergarten.TeacherName,
                 CreatedAt = kindergarten.CreatedAt,
-                UpdatedAt = kindergarten.UpdatedAt
+                UpdatedAt = kindergarten.UpdatedAt,
+                Gallery = await LoadGalleryAsync(id)
             };
             return View(vm);
         }
@@ -177,6 +210,69 @@ namespace TARge25Shop.Controllers
             }
 
             return RedirectToAction(nameof(Index));
+        }
+
+        // Pilt loetakse andmebaasist ainult selle kuvamise päringu ajal.
+        [HttpGet]
+        [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
+        public async Task<IActionResult> Image(Guid id, Guid imageId)
+        {
+            var image = await _fileService.GetImageAsync(id, imageId);
+            if (image == null)
+            {
+                return NotFound();
+            }
+
+            Response.Headers["X-Content-Type-Options"] = "nosniff";
+            return File(image.Data, image.ContentType);
+        }
+
+        // Ühe pildi eemaldamine ei kustuta ankeeti ega teisi pilte.
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteImage([FromRoute] Guid id, Guid imageId)
+        {
+            if (!await _fileService.DeleteImageAsync(id, imageId))
+            {
+                return NotFound();
+            }
+
+            return RedirectToAction(nameof(Update), new { id });
+        }
+
+        private async Task<KindergartenImagesViewModel> LoadGalleryAsync(Guid id, bool allowDelete = false)
+        {
+            var images = await _fileService.GetImagesAsync(id);
+            return new KindergartenImagesViewModel
+            {
+                KindergartenId = id,
+                AllowDelete = allowDelete,
+                Images = images.Select(x => new KindergartenImageViewModel
+                {
+                    Id = x.Id,
+                    FileName = x.FileName
+                }).ToList()
+            };
+        }
+
+        private async Task<List<FileUploadDto>> ReadFilesAsync(List<IFormFile> files)
+        {
+            if (files.Count > FileUploadDto.MaxFileCount)
+                throw new ValidationException("Korraga saab lisada kuni 10 pilti.");
+            if (files.Sum(x => x.Length) > FileUploadDto.MaxTotalSize)
+                throw new ValidationException("Piltide kogumaht võib olla kuni 20 MB.");
+
+            var uploads = new List<FileUploadDto>();
+            foreach (var file in files)
+            {
+                if (file.Length == 0 || file.Length > FileUploadDto.MaxFileSize)
+                    throw new ValidationException("Pilt ei tohi olla tühi ega suurem kui 5 MB.");
+
+                using var stream = new MemoryStream();
+                await file.CopyToAsync(stream, HttpContext.RequestAborted);
+                uploads.Add(new FileUploadDto { FileName = file.FileName, Data = stream.ToArray() });
+            }
+            return uploads;
         }
 
         // Tuleb teha vaheinstants ViewModeli ja DTO vahel.

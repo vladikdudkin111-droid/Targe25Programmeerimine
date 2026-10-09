@@ -9,14 +9,17 @@ namespace TARge25Shop.ApplicationServices.Services
     public class KindergartenServices : IKindergartenServices
     {
         private readonly TARge25ShopContext _context;
+        private readonly IFileService _fileService;
 
-        public KindergartenServices(TARge25ShopContext context)
+        public KindergartenServices(TARge25ShopContext context, IFileService fileService)
         {
             _context = context;
+            _fileService = fileService;
         }
 
         public async Task<Kindergarten> Create(KindergartenDto dto)
         {
+            var images = _fileService.PrepareImages(dto.Files);
             // ID ja kuupäevad määrame serveris, mitte vormi saadetud väärtuste põhjal.
             var now = DateTime.Now;
             var kindergarten = new Kindergarten
@@ -27,7 +30,8 @@ namespace TARge25Shop.ApplicationServices.Services
                 KindergartenName = dto.KindergartenName,
                 TeacherName = dto.TeacherName,
                 CreatedAt = now,
-                UpdatedAt = now
+                UpdatedAt = now,
+                Images = images
             };
 
             _context.Kindergartens.Add(kindergarten);
@@ -41,6 +45,13 @@ namespace TARge25Shop.ApplicationServices.Services
             if (kindergarten == null)
             {
                 return null;
+            }
+
+            var images = _fileService.PrepareImages(dto.Files);
+            foreach (var image in images)
+            {
+                image.KindergartenId = kindergarten.Id;
+                _context.KindergartenImages.Add(image);
             }
 
             // Loomise aeg jääb muutmata; uuendame ainult muudetavaid välju ja muutmise aega.
@@ -68,6 +79,7 @@ namespace TARge25Shop.ApplicationServices.Services
                 return null;
             }
 
+            // Võõrvõtme kaskaadkustutus eemaldab pildid ka siis, kui neid pole laaditud.
             _context.Kindergartens.Remove(kindergarten);
             await _context.SaveChangesAsync();
             return kindergarten;

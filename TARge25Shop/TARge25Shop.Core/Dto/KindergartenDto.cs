@@ -12,5 +12,7 @@ namespace TARge25Shop.Core.Dto
         // Loomise ja viimase muutmise aja määrab teenus.
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
+
+        public List<FileUploadDto> Files { get; set; } = [];
     }
 }

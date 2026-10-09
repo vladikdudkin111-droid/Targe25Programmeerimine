@@ -1,0 +1,33 @@
+@model TARge25Shop.Models.Kindergarten.KindergartenImagesViewModel
+
+<h2 class="h4 mt-4">Images</h2>
+@if (Model.Images.Count == 0)
+{
+    <p class="text-muted">No images have been added yet.</p>
+}
+else
+{
+    <div class="row g-3 mb-4">
+        @foreach (var image in Model.Images)
+        {
+            <div class="col-sm-6 col-md-4 col-lg-3">
+                <div class="card h-100">
+                    <a asp-controller="Kindergarten" asp-action="Image" asp-route-id="@Model.KindergartenId" asp-route-imageId="@image.Id" target="_blank" rel="noopener">
+                        <img src="@Url.Action("Image", "Kindergarten", new { id = Model.KindergartenId, imageId = image.Id })" alt="@image.FileName" class="card-img-top" style="height: 180px; object-fit: contain;" loading="lazy" />
+                    </a>
+                    <div class="card-body">
+                        <p class="card-text text-break">@image.FileName</p>
+                        @if (Model.AllowDelete)
+                        {
+                            @* Igal pildil on eraldi POST-vorm, mis asub ankeedi vormist väljaspool. *@
+                            <form asp-controller="Kindergarten" asp-action="DeleteImage" asp-route-id="@Model.KindergartenId" method="post" onsubmit="return confirm('Delete this image?');">
+                                <input type="hidden" name="imageId" value="@image.Id" />
+                                <button type="submit" class="btn btn-outline-danger btn-sm" aria-label="Delete image @image.FileName">Delete image</button>
+                            </form>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}

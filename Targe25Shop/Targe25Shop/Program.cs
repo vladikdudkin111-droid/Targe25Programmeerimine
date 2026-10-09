@@ -22,6 +22,8 @@ namespace TARge25Shop
             // Registreerime lasteaiarühmade teenuse.
             builder.Services.AddScoped<IKindergartenServices, KindergartenServices>();
 
+            builder.Services.AddScoped<IFileService, FileService>();
+
             // Registreerime Entity Framework DbContexti ja SQL Server ühenduse.
             // Connection string loetakse appsettings.json failist nimega DefaultConnection.
             builder.Services.AddDbContext<TARge25ShopContext>(options =>

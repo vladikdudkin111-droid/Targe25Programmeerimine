@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../TARge25Shop/TARge25Shop.ApplicationServices/TARge25Shop.ApplicationServices.csproj" />
+    <ProjectReference Include="../../TARge25Shop/TARge25Shop.Data/TARge25Shop.Data.csproj" />
+  </ItemGroup>
+</Project>
