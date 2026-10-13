@@ -23,6 +23,7 @@ namespace TARge25Shop
             builder.Services.AddScoped<IKindergartenServices, KindergartenServices>();
 
             builder.Services.AddScoped<IFileService, FileService>();
+            // Registreerime pilditeenuse DI konteineris. Sama HTTP päringu sees kasutatakse sama teenuseinstantsi.
 
             // Registreerime Entity Framework DbContexti ja SQL Server ühenduse.
             // Connection string loetakse appsettings.json failist nimega DefaultConnection.

@@ -19,6 +19,7 @@ namespace TARge25Shop.Data
         public DbSet<Kindergarten> Kindergartens { get; set; } = null!;
 
         public DbSet<KindergartenImage> KindergartenImages { get; set; } = null!;
+        // DbSet võimaldab teha päringuid KindergartenImages tabelisse ja muuta selle kirjeid.
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -29,12 +30,14 @@ namespace TARge25Shop.Data
                 image.Property(x => x.FileName).HasMaxLength(255);
                 image.Property(x => x.ContentType).HasMaxLength(100);
                 image.Property(x => x.Data).HasColumnType("varbinary(max)");
+                // SQL Serveris hoitakse pildi tegelikku sisu binaarses veerus, mitte kettal asuva faili teena.
 
                 // Ankeedi kustutamisel kustutab andmebaas ka kõik selle pildid.
                 image.HasOne(x => x.Kindergarten)
                     .WithMany(x => x.Images)
                     .HasForeignKey(x => x.KindergartenId)
                     .OnDelete(DeleteBehavior.Cascade);
+                    // Ühel ankeedil on mitu pilti; ankeedi kustutamisel eemaldab andmebaas automaatselt ka seotud pildid.
             });
         }
     }

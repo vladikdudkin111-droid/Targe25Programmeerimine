@@ -72,6 +72,7 @@ namespace TARge25Shop.Controllers
             {
                 var dto = ToDto(vm);
                 dto.Files = await ReadFilesAsync(vm.Files);
+                // Loeme vormi failidest baidid DTO-sse; teenus saab need kontrollida ja koos ankeediga salvestada.
                 await _kindergartenServices.Create(dto);
             }
             catch (ValidationException exception)
@@ -157,6 +158,7 @@ namespace TARge25Shop.Controllers
             {
                 var dto = ToDto(vm);
                 dto.Files = await ReadFilesAsync(vm.Files);
+                // Loeme vormi failidest baidid DTO-sse; teenus saab need kontrollida ja koos ankeediga salvestada.
                 var updated = await _kindergartenServices.Update(dto);
                 if (updated == null)
                 {
@@ -218,6 +220,7 @@ namespace TARge25Shop.Controllers
         public async Task<IActionResult> Image(Guid id, Guid imageId)
         {
             var image = await _fileService.GetImageAsync(id, imageId);
+            // Loeme andmebaasist pildi ainult siis, kui see kuulub aadressis määratud ankeedile.
             if (image == null)
             {
                 return NotFound();
@@ -225,6 +228,7 @@ namespace TARge25Shop.Controllers
 
             Response.Headers["X-Content-Type-Options"] = "nosniff";
             return File(image.Data, image.ContentType);
+            // Tagastame pildi baidid HTTP vastuses koos kontrollitud MIME tüübiga; brauser kuvab need pildina.
         }
 
         // Ühe pildi eemaldamine ei kustuta ankeeti ega teisi pilte.
@@ -238,11 +242,13 @@ namespace TARge25Shop.Controllers
             }
 
             return RedirectToAction(nameof(Update), new { id });
+            // Pärast ühe pildi kustutamist avame uuesti sama ankeedi muutmisvormi.
         }
 
         private async Task<KindergartenImagesViewModel> LoadGalleryAsync(Guid id, bool allowDelete = false)
         {
             var images = await _fileService.GetImagesAsync(id);
+            // Galerii vajab ainult piltide ID-sid ja nimesid; piltide baidid laaditakse eraldi Image päringutega.
             return new KindergartenImagesViewModel
             {
                 KindergartenId = id,
@@ -269,8 +275,11 @@ namespace TARge25Shop.Controllers
                     throw new ValidationException("Pilt ei tohi olla tühi ega suurem kui 5 MB.");
 
                 using var stream = new MemoryStream();
+                // Ajutine mälupuhver faili sisu lugemiseks; using vabastab voo automaatselt.
                 await file.CopyToAsync(stream, HttpContext.RequestAborted);
+                // Kopeerime faili asünkroonselt mällu; päringu katkestamisel saab kopeerimise tühistada.
                 uploads.Add(new FileUploadDto { FileName = file.FileName, Data = stream.ToArray() });
+                // ToArray loob baitide massiivi, mille koos faili nimega edastame teenusele.
             }
             return uploads;
         }
