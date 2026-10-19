@@ -16,6 +16,9 @@ namespace TARge25Shop
             builder.Services.AddScoped<ISpaceshipServices, SpaceshipServices>();
             builder.Services.AddScoped<IFileServices, FileServices>();
             builder.Services.AddScoped<IRealEstateServices, RealEstateServices>();
+            builder.Services.AddHttpClient<IChuckNorrisServices, ChuckNorrisServices>();
+            // Registreerime Cocktail API teenuse ja HttpClienti DI konteineris.
+            builder.Services.AddHttpClient<ICocktailServices, CocktailServices>();
 
             // Ühendusstring määrab nii SQL Serveri eksemplari kui ka andmebaasi nime.
             var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");

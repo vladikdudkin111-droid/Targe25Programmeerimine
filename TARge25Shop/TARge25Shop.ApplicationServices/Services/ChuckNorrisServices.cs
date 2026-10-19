@@ -1,9 +1,10 @@
 using System.Text.Json;
 using TARge25Shop.Core.Dto;
+using TARge25Shop.Core.ServiceInterface;
 
 namespace TARge25Shop.ApplicationServices.Services
 {
-    public class ChuckNorrisServices
+    public class ChuckNorrisServices : IChuckNorrisServices
     {
         private readonly HttpClient _httpClient;
 

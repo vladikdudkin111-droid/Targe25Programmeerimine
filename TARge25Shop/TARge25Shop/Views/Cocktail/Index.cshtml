@@ -1,0 +1,103 @@
+@* Leht saab kontrollerilt CocktailViewModeli. *@
+@model TARge25Shop.Models.Cocktail.CocktailViewModel
+@using TARge25Shop.Models.Cocktail
+
+@{
+    ViewData["Title"] = "Kokteilide kataloog";
+}
+
+@* CSS kujundab otsingu, tähestiku ja kokteilikaardid. *@
+<style>
+    .cocktail-heading { background: linear-gradient(120deg, #fff0dc, #f1f6ff); border-radius: 18px; padding: 28px; margin-bottom: 24px; }
+    .cocktail-heading h1 { font-weight: 750; margin-bottom: 8px; }
+    .cocktail-search { max-width: 750px; }
+    .cocktail-alphabet { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 20px; }
+    .cocktail-alphabet a { min-width: 37px; text-align: center; border-radius: 8px; padding: 7px 10px; text-decoration: none; border: 1px solid #d8dee7; color: #243344; }
+    .cocktail-alphabet a.active, .cocktail-alphabet a:hover { background: #243344; color: white; }
+    .cocktail-card { border: 1px solid #e5e9ef; border-radius: 16px; overflow: hidden; transition: box-shadow .2s; }
+    .cocktail-card:hover { box-shadow: 0 8px 26px rgba(0,0,0,.09); }
+    .cocktail-card img { height: 225px; width: 100%; object-fit: cover; }
+    .cocktail-card details summary { color: #0d6efd; font-weight: 600; cursor: pointer; }
+    .cocktail-card details[open] summary { margin-bottom: 12px; }
+</style>
+
+@* Otsinguvorm saadab GET-päringu CocktailControlleri Index-meetodisse. *@
+<div class="cocktail-heading">
+    <h1>Kokteilide kataloog</h1>
+    <p class="text-muted">Avasta kokteile, vaata pilte, koostisosi ja valmistamisõpetusi TheCocktailDB API kaudu.</p>
+    <form asp-controller="Cocktail" asp-action="Index" method="get" class="d-flex flex-wrap gap-2 cocktail-search">
+        <input class="form-control flex-grow-1" style="min-width: 210px" type="search" name="search" value="@Model.Search" placeholder="Otsi nime järgi, nt Mojito või Margarita" aria-label="Kokteili otsing" />
+        <button type="submit" class="btn btn-primary">Otsi kokteili</button>
+        <a asp-controller="Cocktail" asp-action="Index" class="btn btn-outline-secondary">Näita kataloogi</a>
+    </form>
+</div>
+
+<h5>Vali algustäht</h5>
+@* Iga täht tekitab päringu, näiteks /Cocktail/Index?letter=B. *@
+<nav class="cocktail-alphabet" aria-label="Kokteilide tähestik">
+    @foreach (var character in Model.Letters)
+    {
+        var selected = !Model.IsSearchResult && Model.Letter == character.ToString();
+        <a asp-controller="Cocktail" asp-action="Index" asp-route-letter="@character" class="@(selected ? "active" : "")" aria-current="@(selected ? "page" : null)">@character</a>
+    }
+</nav>
+
+@* Kui API ei vasta, näitame veateadet kokteilide asemel. *@
+@if (ViewBag.Error != null)
+{
+    <div class="alert alert-danger">@ViewBag.Error</div>
+}
+else
+{
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="mb-0">@(Model.IsSearchResult ? $"Otsing: {Model.Search}" : $"Kokteilid tähega {Model.Letter}")</h4>
+        <span class="text-muted">Leitud: @Model.Drinks.Count</span>
+    </div>
+
+    @if (Model.Drinks.Count == 0)
+    {
+        <div class="alert alert-info">Selle otsingu või tähega kokteile ei leitud. Proovi teist nime või tähte.</div>
+    }
+    else
+    {
+        <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 g-4 mb-4">
+            @* Iga API-st saadud joogi jaoks luuakse eraldi kaart. *@
+            @foreach (var drink in Model.Drinks)
+            {
+                <div class="col">
+                    <article class="card cocktail-card h-100">
+                        @* Pilt tuleb otse API poolt tagastatud URL-ilt. *@
+                        @if (!string.IsNullOrWhiteSpace(drink.StrDrinkThumb))
+                        {
+                            <img src="@drink.StrDrinkThumb" alt="@drink.StrDrink" loading="lazy" />
+                        }
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title">@drink.StrDrink</h5>
+                            <p class="text-muted mb-2">@drink.StrCategory @(!string.IsNullOrWhiteSpace(drink.StrAlcoholic) ? $"· {drink.StrAlcoholic}" : "")</p>
+                            @* details avab retsepti ilma JavaScriptita. *@
+                            <details class="mt-auto pt-2">
+                                <summary>Vaata retsepti</summary>
+                                @if (!string.IsNullOrWhiteSpace(drink.StrGlass))
+                                {
+                                    <p class="mt-2 mb-2"><strong>Klaas:</strong> @drink.StrGlass</p>
+                                }
+                                <strong>Koostisosad:</strong>
+                                <ul class="mt-1">
+                                    @* ViewModel ühendab koostisosade nimetused ja kogused. *@
+                                    @foreach (var ingredient in CocktailViewModel.GetIngredients(drink))
+                                    {
+                                        <li>@ingredient</li>
+                                    }
+                                </ul>
+                                <strong>Valmistamine:</strong>
+                                <p style="white-space: pre-line">@drink.StrInstructions</p>
+                            </details>
+                        </div>
+                    </article>
+                </div>
+            }
+        </div>
+    }
+}
+
+<p class="text-muted small">Andmed ja fotod: <a href="https://www.thecocktaildb.com/api.php" target="_blank" rel="noopener noreferrer">TheCocktailDB</a>. Tasuta API kuvab kokteile nime või algustähe järgi.</p>
