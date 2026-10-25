@@ -10,6 +10,7 @@ public sealed class KindergartenTest : TestBase
 {
     // SpaceShip näite järgi: loomine, ID järgi otsimine, muutmine ja kustutamine.
     [Fact]
+    // Test kontrollib rühma loomist ja kõigi põhiandmete salvestamist.
     public async Task Should_CreateKindergarten_WhenDataIsProvided()
     {
         var dto = Group();
@@ -27,6 +28,7 @@ public sealed class KindergartenTest : TestBase
     }
 
     [Fact]
+    // Test kontrollib, et vale ID järgi rühma ei leita.
     public async Task ShouldNot_FindKindergarten_WhenIdIsDifferent()
     {
         await Svc<IKindergartenServices>().Create(Group());
@@ -37,6 +39,7 @@ public sealed class KindergartenTest : TestBase
     }
 
     [Fact]
+    // Test kontrollib rühma leidmist ja selle andmete õigsust.
     public async Task Should_FindKindergarten_WhenIdExists()
     {
         var created = await Svc<IKindergartenServices>().Create(Group());
@@ -53,6 +56,7 @@ public sealed class KindergartenTest : TestBase
     }
 
     [Fact]
+    // Test kontrollib, et kustutamine tagastab kustutatud rühma andmed.
     public async Task Should_ReturnDeletedKindergarten_WhenIdExists()
     {
         var created = await Svc<IKindergartenServices>().Create(Group());
@@ -65,6 +69,7 @@ public sealed class KindergartenTest : TestBase
     }
 
     [Fact]
+    // Test kontrollib, et ühe rühma kustutamisel jääb teine rühm alles.
     public async Task Should_KeepOtherKindergarten_WhenDeletingOneGroup()
     {
         var first = await Svc<IKindergartenServices>().Create(Group());
@@ -77,6 +82,7 @@ public sealed class KindergartenTest : TestBase
     }
 
     [Fact]
+    // Test kontrollib kõigi muudetavate väljade salvestamist.
     public async Task Should_UpdateAllFields_WhenNewDataIsProvided()
     {
         var created = await Svc<IKindergartenServices>().Create(Group());
@@ -100,6 +106,7 @@ public sealed class KindergartenTest : TestBase
     }
 
     [Fact]
+    // Test kontrollib, et puuduva ID-ga uuendamine ei muuda olemasolevat rühma.
     public async Task ShouldNot_UpdateKindergarten_WhenIdDoesNotExist()
     {
         var created = await Svc<IKindergartenServices>().Create(Group());
@@ -117,6 +124,7 @@ public sealed class KindergartenTest : TestBase
     }
 
     [Fact]
+    // Test kontrollib, et loomise ja muutmise aja määrab server.
     public async Task Should_SetServerDates_WhenCreatingKindergarten()
     {
         var dto = Group();
@@ -133,6 +141,7 @@ public sealed class KindergartenTest : TestBase
     }
 
     [Fact]
+    // Test kontrollib, et samadest sisendandmetest loodud rühmad saavad erinevad ID-d.
     public async Task Should_GenerateDifferentIds_WhenCreatingFromSameDto()
     {
         var dto = Group();
@@ -149,6 +158,7 @@ public sealed class KindergartenTest : TestBase
     }
 
     [Fact]
+    // Test kontrollib, et kustutatud rühma enam ei leita.
     public async Task ShouldNot_FindKindergarten_WhenItHasBeenDeleted()
     {
         var created = await Svc<IKindergartenServices>().Create(Group());
@@ -163,6 +173,7 @@ public sealed class KindergartenTest : TestBase
     }
 
     [Fact]
+    // Test kontrollib, et tühja ID-ga uuendamine ei muuda olemasolevat rühma.
     public async Task ShouldNot_UpdateKindergarten_WhenIdIsEmpty()
     {
         var created = await Svc<IKindergartenServices>().Create(Group());
@@ -178,6 +189,7 @@ public sealed class KindergartenTest : TestBase
 
     // 15 enda väljamõeldud lisatesti.
     [Fact, Trait("Origin", "Original")]
+    // Test kontrollib rühma loomist ilma piltideta.
     public async Task Should_CreateWithoutImages_WhenNoFilesAreProvided()
     {
         var created = await Svc<IKindergartenServices>().Create(Group());
@@ -188,6 +200,7 @@ public sealed class KindergartenTest : TestBase
     }
 
     [Fact, Trait("Origin", "Original")]
+    // Test kontrollib piltide sisu salvestamist ja piltide seost loodud rühmaga.
     public async Task Should_SaveImageBytesAndOwner_WhenCreatingWithFiles()
     {
         var first = Png("esimene.png");
@@ -204,6 +217,7 @@ public sealed class KindergartenTest : TestBase
     }
 
     [Fact, Trait("Origin", "Original")]
+    // Test kontrollib, et vigase pildi korral ei salvestata rühma ega teisi pilte.
     public async Task ShouldNot_SavePartialCreate_WhenOneImageIsInvalid()
     {
         var bad = Png("vale.txt");
@@ -217,6 +231,7 @@ public sealed class KindergartenTest : TestBase
     }
 
     [Fact, Trait("Origin", "Original")]
+    // Test kontrollib, et uuendamine ei muuda rühma loomise aega.
     public async Task Should_PreserveCreatedAt_WhenUpdateSuppliesAnotherDate()
     {
         var created = await Svc<IKindergartenServices>().Create(Group());
@@ -232,6 +247,7 @@ public sealed class KindergartenTest : TestBase
     }
 
     [Fact, Trait("Origin", "Original")]
+    // Test kontrollib, et uuendamisel määrab server uue muutmise aja.
     public async Task Should_AdvanceUpdatedAt_WhenUpdatingExistingGroup()
     {
         var created = await Svc<IKindergartenServices>().Create(Group());
@@ -249,6 +265,7 @@ public sealed class KindergartenTest : TestBase
     }
 
     [Fact, Trait("Origin", "Original")]
+    // Test kontrollib, et failideta uuendamisel jäävad vanad pildid alles.
     public async Task Should_KeepImages_WhenUpdatingWithoutNewFiles()
     {
         var created = await Svc<IKindergartenServices>().Create(Group(Png()));
@@ -265,6 +282,7 @@ public sealed class KindergartenTest : TestBase
     }
 
     [Fact, Trait("Origin", "Original")]
+    // Test kontrollib uue pildi lisamist olemasoleva pildi kõrvale.
     public async Task Should_AppendImages_WhenUpdatingWithNewFiles()
     {
         var created = await Svc<IKindergartenServices>().Create(Group(Png("vana.png")));
@@ -284,6 +302,7 @@ public sealed class KindergartenTest : TestBase
     }
 
     [Fact, Trait("Origin", "Original")]
+    // Test kontrollib, et vigase pildiga uuendamine jätab andmed ja vanad pildid muutmata.
     public async Task ShouldNot_ChangeStoredData_WhenUpdateContainsInvalidImage()
     {
         var created = await Svc<IKindergartenServices>().Create(Group(Png("vana.png")));
@@ -304,6 +323,7 @@ public sealed class KindergartenTest : TestBase
     }
 
     [Fact, Trait("Origin", "Original")]
+    // Test kontrollib, et puuduva rühma uuendamisel ei salvestata pilte.
     public async Task ShouldNot_AddOrphanImages_WhenUpdatingMissingGroup()
     {
         var dto = Group(Png());
@@ -317,6 +337,7 @@ public sealed class KindergartenTest : TestBase
     }
 
     [Fact, Trait("Origin", "Original")]
+    // Test kontrollib, et tühja ID-ga otsing ei tagasta olemasolevat rühma.
     public async Task ShouldNot_ReturnExistingGroup_WhenLookingUpEmptyGuid()
     {
         var created = await Svc<IKindergartenServices>().Create(Group());
@@ -328,6 +349,7 @@ public sealed class KindergartenTest : TestBase
     }
 
     [Fact, Trait("Origin", "Original")]
+    // Test kontrollib, et tundmatu ID-ga kustutamine jätab olemasoleva rühma ja pildi alles.
     public async Task ShouldNot_DeleteExistingData_WhenDeleteIdIsUnknown()
     {
         var created = await Svc<IKindergartenServices>().Create(Group(Png()));
@@ -340,6 +362,7 @@ public sealed class KindergartenTest : TestBase
     }
 
     [Fact, Trait("Origin", "Original")]
+    // Test kontrollib, et sama rühma teistkordne kustutamine tagastab nulli.
     public async Task Should_ReturnNull_WhenDeletingSameGroupTwice()
     {
         var created = await Svc<IKindergartenServices>().Create(Group());
@@ -352,6 +375,7 @@ public sealed class KindergartenTest : TestBase
     }
 
     [Fact, Trait("Origin", "Original")]
+    // Test kontrollib, et rühma kustutamine eemaldab ka mällu laadimata pildid.
     public async Task Should_CascadeDeleteImages_WhenImagesAreNotTracked()
     {
         var created = await Svc<IKindergartenServices>().Create(Group(Png("a.png"), Png("b.png")));
@@ -365,6 +389,7 @@ public sealed class KindergartenTest : TestBase
     }
 
     [Fact, Trait("Origin", "Original")]
+    // Test kontrollib, et rühma kustutamine ei eemalda teise rühma pilte.
     public async Task Should_KeepOtherGroupsImages_WhenDeletingGroupWithImages()
     {
         var first = await Svc<IKindergartenServices>().Create(Group(Png("esimene.png")));
@@ -382,6 +407,7 @@ public sealed class KindergartenTest : TestBase
     }
 
     [Fact, Trait("Origin", "Original")]
+    // Test kontrollib, et samade andmetega uuendamine ei loo uut rühma.
     public async Task Should_NotDuplicateGroup_WhenUpdatingWithUnchangedFields()
     {
         var created = await Svc<IKindergartenServices>().Create(Group());

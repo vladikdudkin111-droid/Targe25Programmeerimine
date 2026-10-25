@@ -20,6 +20,7 @@ public sealed class KindergartenFileTests : TestBase
     };
 
     [Theory, MemberData(nameof(SupportedImages))]
+    // Test kontrollib toetatud pildi sisu, failitüüpi, ID-d ja lisamise aega.
     public void Should_PrepareSupportedImage_WhenSignatureMatches(string name, byte[] bytes, string mime)
     {
         var before = DateTime.Now;
@@ -42,6 +43,7 @@ public sealed class KindergartenFileTests : TestBase
     [InlineData("pilt.webp", "RIFF")]
     [InlineData("pilt.webp", "RIFF0000NOPE")]
     [InlineData("pilt.svg", "<svg/>")]
+    // Test kontrollib vale sisu või lubamatu laiendiga faili tagasilükkamist.
     public void Should_RejectFile_WhenSignatureOrExtensionIsInvalid(string name, string content)
     {
         var dto = new FileUploadDto { FileName = name, Data = System.Text.Encoding.UTF8.GetBytes(content) };
@@ -50,18 +52,21 @@ public sealed class KindergartenFileTests : TestBase
     }
 
     [Fact]
+    // Test kontrollib, et failideta sisend annab tühja piltide nimekirja.
     public void Should_ReturnEmptyList_WhenNoImagesAreProvided()
     {
         Assert.Empty(Svc<IFileService>().PrepareImages([]));
     }
 
     [Fact]
+    // Test kontrollib tühja pildifaili tagasilükkamist.
     public void Should_RejectEmptyFile_WhenImageHasNoBytes()
     {
         Assert.Throws<ValidationException>(() => Svc<IFileService>().PrepareImages([Png(size: 0)]));
     }
 
     [Fact]
+    // Test kontrollib üle 5 MB suuruse pildifaili tagasilükkamist.
     public void Should_RejectOversizedImage_WhenSingleFileLimitIsExceeded()
     {
         Assert.Throws<ValidationException>(() => Svc<IFileService>().PrepareImages(
@@ -69,6 +74,7 @@ public sealed class KindergartenFileTests : TestBase
     }
 
     [Fact]
+    // Test kontrollib täpselt 5 MB suuruse pildifaili lubamist.
     public void Should_AcceptImage_WhenSizeEqualsSingleFileLimit()
     {
         var image = Assert.Single(Svc<IFileService>().PrepareImages([Png(size: FileUploadDto.MaxFileSize)]));
@@ -77,6 +83,7 @@ public sealed class KindergartenFileTests : TestBase
     }
 
     [Fact]
+    // Test kontrollib rohkem kui kümne pildi korraga lisamise keelamist.
     public void Should_RejectTooManyImages_WhenFileCountLimitIsExceeded()
     {
         var files = Enumerable.Range(0, FileUploadDto.MaxFileCount + 1).Select(_ => Png()).ToList();
@@ -85,6 +92,7 @@ public sealed class KindergartenFileTests : TestBase
     }
 
     [Fact]
+    // Test kontrollib kümne pildi lubamist ja nende ID-de erinevust.
     public void Should_AcceptTenImages_WhenFileCountEqualsLimit()
     {
         var files = Enumerable.Range(0, FileUploadDto.MaxFileCount).Select(_ => Png()).ToList();
@@ -96,6 +104,7 @@ public sealed class KindergartenFileTests : TestBase
     }
 
     [Fact]
+    // Test kontrollib piltide tagasilükkamist kogumahu piiri ületamisel ühe baidi võrra.
     public void Should_RejectBatch_WhenTotalSizeExceedsLimitByOneByte()
     {
         var files = Enumerable.Range(0, 4).Select(_ => Png(size: FileUploadDto.MaxFileSize)).ToList();
@@ -105,6 +114,7 @@ public sealed class KindergartenFileTests : TestBase
     }
 
     [Fact]
+    // Test kontrollib täpselt 20 MB kogumahuga piltide lubamist.
     public void Should_AcceptBatch_WhenTotalSizeEqualsLimit()
     {
         var files = Enumerable.Range(0, 4).Select(_ => Png(size: FileUploadDto.MaxFileSize)).ToList();
@@ -118,6 +128,7 @@ public sealed class KindergartenFileTests : TestBase
     [Theory]
     [InlineData("C:\\fakepath\\foto.PNG", "foto.PNG")]
     [InlineData("../../foto.png", "foto.png")]
+    // Test kontrollib kaustatee eemaldamist pildi failinimest.
     public void Should_RemoveDirectoryFromName_WhenPreparingImage(string suppliedName, string expectedName)
     {
         var image = Assert.Single(Svc<IFileService>().PrepareImages([Png(suppliedName)]));
@@ -129,6 +140,7 @@ public sealed class KindergartenFileTests : TestBase
     [InlineData("")]
     [InlineData(" ")]
     [InlineData("folder/")]
+    // Test kontrollib puuduva või tühja failinime tagasilükkamist.
     public void Should_RejectName_WhenFileNameIsMissing(string name)
     {
         Assert.Throws<ValidationException>(() => Svc<IFileService>().PrepareImages([Png(name)]));
@@ -137,6 +149,7 @@ public sealed class KindergartenFileTests : TestBase
     [Theory]
     [InlineData(255, true)]
     [InlineData(256, false)]
+    // Test kontrollib 255 märgi pikkuse failinime lubamist ja pikema nime keelamist.
     public void Should_CheckFileNameLength_WhenPreparingImage(int length, bool valid)
     {
         var file = Png(new string('a', length - 4) + ".png");
@@ -147,6 +160,7 @@ public sealed class KindergartenFileTests : TestBase
     }
 
     [Fact]
+    // Test kontrollib ainult valitud rühma piltide tagastamist loomise aja ja ID järjekorras.
     public async Task Should_ListOnlyOwnersImages_InCreationOrderThenId()
     {
         var owner = await Svc<IKindergartenServices>().Create(Group(Png("a.png"), Png("b.png"), Png("c.png")));
@@ -167,6 +181,7 @@ public sealed class KindergartenFileTests : TestBase
     }
 
     [Fact]
+    // Test kontrollib õigele rühmale kuuluva pildi sisu ja failitüübi tagastamist.
     public async Task Should_GetImageBytes_WhenOwnerAndImageIdMatch()
     {
         var owner = await Svc<IKindergartenServices>().Create(Group(Png()));
@@ -182,6 +197,7 @@ public sealed class KindergartenFileTests : TestBase
     }
 
     [Fact]
+    // Test kontrollib, et võõra rühma või puuduva ID-ga pilti ei tagastata.
     public async Task ShouldNot_GetImage_WhenOwnerIsDifferentOrImageIsMissing()
     {
         var owner = await Svc<IKindergartenServices>().Create(Group(Png()));
@@ -193,6 +209,7 @@ public sealed class KindergartenFileTests : TestBase
     }
 
     [Fact]
+    // Test kontrollib ainult valitud pildi kustutamist ja selle rühma muutmise aja uuendamist.
     public async Task Should_DeleteOnlySelectedImage_AndUpdateOwnersTimestamp()
     {
         var owner = await Svc<IKindergartenServices>().Create(Group(Png("a.png"), Png("b.png")));
@@ -217,6 +234,7 @@ public sealed class KindergartenFileTests : TestBase
     }
 
     [Fact]
+    // Test kontrollib, et vale rühma või puuduva ID-ga kustutamine jätab pildi ja muutmise aja alles.
     public async Task ShouldNot_DeleteImage_WhenOwnerIsDifferentOrImageIsMissing()
     {
         var owner = await Svc<IKindergartenServices>().Create(Group(Png()));

@@ -37,6 +37,7 @@ public sealed class KindergartenControllerTests : TestBase
     private static FormFile Upload(MemoryStream stream, string name) => new(stream, 0, stream.Length, "Files", name);
 
     [Fact]
+    // Test kontrollib rühmade andmete kuvamist loomise aja järjekorras.
     public async Task Should_ListGroupsInCreationOrder_WhenOpeningIndex()
     {
         var first = await Svc<IKindergartenServices>().Create(Group());
@@ -58,6 +59,7 @@ public sealed class KindergartenControllerTests : TestBase
     }
 
     [Fact]
+    // Test kontrollib tühja nimekirja kuvamist rühmade puudumisel.
     public async Task Should_ShowEmptyList_WhenNoGroupsExist()
     {
         var result = Assert.IsType<ViewResult>(await Controller().Index());
@@ -66,6 +68,7 @@ public sealed class KindergartenControllerTests : TestBase
     }
 
     [Fact]
+    // Test kontrollib tühja lisamisvormi avamist.
     public void Should_ShowBlankForm_WhenOpeningCreate()
     {
         var result = Assert.IsType<ViewResult>(Controller().Create());
@@ -78,6 +81,7 @@ public sealed class KindergartenControllerTests : TestBase
     }
 
     [Fact]
+    // Test kontrollib vormi ja pildi salvestamist serveri loodud rühma ID-ga.
     public async Task Should_SaveFormAndImage_WhenCreatingValidGroup()
     {
         var controller = Controller();
@@ -112,6 +116,7 @@ public sealed class KindergartenControllerTests : TestBase
     [InlineData("TeacherName", null)]
     [InlineData("TeacherName", "")]
     [InlineData("TeacherName", " ")]
+    // Test kontrollib, et puuduva kohustusliku väljaga vormi ei salvestata.
     public async Task ShouldNot_CreateGroup_WhenRequiredFieldIsMissing(string field, string? value)
     {
         var controller = Controller();
@@ -138,6 +143,7 @@ public sealed class KindergartenControllerTests : TestBase
     [InlineData(-1, false)]
     [InlineData(0, true)]
     [InlineData(31, true)]
+    // Test kontrollib negatiivse laste arvu keelamist ning nulli ja 31 lubamist.
     public async Task Should_ValidateChildrenCount_UsingProjectsActualRules(int count, bool valid)
     {
         var controller = Controller();
@@ -164,6 +170,7 @@ public sealed class KindergartenControllerTests : TestBase
     [Theory]
     [InlineData(100, true)]
     [InlineData(101, false)]
+    // Test kontrollib 100 märgi pikkuste nimede lubamist ja pikemate nimede keelamist.
     public async Task Should_CheckStringLength_WhenSubmittingForm(int length, bool valid)
     {
         var controller = Controller();
@@ -189,6 +196,7 @@ public sealed class KindergartenControllerTests : TestBase
     }
 
     [Fact]
+    // Test kontrollib olemasoleva rühma andmete ja pildigalerii kuvamist.
     public async Task Should_ShowDetailsAndGallery_WhenGroupExists()
     {
         var created = await Svc<IKindergartenServices>().Create(Group(Png()));
@@ -209,6 +217,7 @@ public sealed class KindergartenControllerTests : TestBase
     }
 
     [Fact]
+    // Test kontrollib rühma andmete ja kustutamist lubava galerii kuvamist muutmisvormis.
     public async Task Should_ShowEditableGallery_WhenOpeningUpdate()
     {
         var created = await Svc<IKindergartenServices>().Create(Group(Png()));
@@ -227,6 +236,7 @@ public sealed class KindergartenControllerTests : TestBase
     }
 
     [Fact]
+    // Test kontrollib kehtivate vormimuudatuste salvestamist ja nimekirja suunamist.
     public async Task Should_SaveChanges_WhenSubmittingValidUpdate()
     {
         var created = await Svc<IKindergartenServices>().Create(Group());
@@ -249,6 +259,7 @@ public sealed class KindergartenControllerTests : TestBase
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
+    // Test kontrollib uuendamise keelamist tühja või vormist erineva aadressi ID korral.
     public async Task Should_RejectUpdate_WhenRouteIdIsDifferentOrEmpty(bool emptyId)
     {
         var created = await Svc<IKindergartenServices>().Create(Group());
@@ -261,6 +272,7 @@ public sealed class KindergartenControllerTests : TestBase
     }
 
     [Fact]
+    // Test kontrollib galerii säilitamist ja andmete muutmata jätmist vigase vormi korral.
     public async Task Should_RestoreGalleryAndKeepData_WhenUpdateFormIsInvalid()
     {
         var created = await Svc<IKindergartenServices>().Create(Group(Png()));
@@ -282,6 +294,7 @@ public sealed class KindergartenControllerTests : TestBase
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
+    // Test kontrollib andmete muutmata jätmist ja vormivea kuvamist vigase pildi korral.
     public async Task Should_NotSaveChanges_WhenUploadedImageHasWrongFormat(bool update)
     {
         var created = await Svc<IKindergartenServices>().Create(Group(Png("vana.png")));
@@ -308,6 +321,7 @@ public sealed class KindergartenControllerTests : TestBase
     [InlineData("large")]
     [InlineData("count")]
     [InlineData("total")]
+    // Test kontrollib vigase üleslaadimise korral vormi tagastamist ilma andmeid salvestamata.
     public async Task Should_ReturnForm_WhenUploadLimitsAreExceeded(string scenario)
     {
         var controller = Controller();
@@ -332,6 +346,7 @@ public sealed class KindergartenControllerTests : TestBase
     }
 
     [Fact]
+    // Test kontrollib rühma andmete ja galerii kuvamist kustutamise kinnitusel ilma rühma kustutamata.
     public async Task Should_ShowConfirmationWithoutDeleting_WhenOpeningDelete()
     {
         var created = await Svc<IKindergartenServices>().Create(Group(Png()));
@@ -353,6 +368,7 @@ public sealed class KindergartenControllerTests : TestBase
     }
 
     [Fact]
+    // Test kontrollib rühma ja piltide kustutamist ning nimekirja suunamist.
     public async Task Should_DeleteGroupAndRedirect_WhenDeletionIsConfirmed()
     {
         var created = await Svc<IKindergartenServices>().Create(Group(Png()));
@@ -367,6 +383,7 @@ public sealed class KindergartenControllerTests : TestBase
     }
 
     [Fact]
+    // Test kontrollib õigele rühmale kuuluva pildi tagastamist koos failitüübi ja kaitsepäisega.
     public async Task Should_ReturnImageWithMimeType_WhenOwnerMatches()
     {
         var created = await Svc<IKindergartenServices>().Create(Group(Png()));
@@ -380,6 +397,7 @@ public sealed class KindergartenControllerTests : TestBase
     }
 
     [Fact]
+    // Test kontrollib pildi kustutamist ja sama rühma muutmisvormile suunamist.
     public async Task Should_DeleteImageAndReturnToUpdate_WhenOwnerMatches()
     {
         var created = await Svc<IKindergartenServices>().Create(Group(Png()));
@@ -402,6 +420,7 @@ public sealed class KindergartenControllerTests : TestBase
     [InlineData("DeleteConfirmation")]
     [InlineData("Image")]
     [InlineData("DeleteImage")]
+    // Test kontrollib, et puuduvate andmete küsimisel tagastatakse NotFound.
     public async Task Should_ReturnNotFound_WhenRequestedDataDoesNotExist(string action)
     {
         var controller = Controller();
