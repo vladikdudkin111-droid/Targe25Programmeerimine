@@ -1,0 +1,42 @@
+@model TARge25Shop.Models.OpenWeather.OpenWeatherViewModel
+@{
+    ViewData["Title"] = "Praegune ilm";
+}
+
+<h1>Praegune ilm</h1>
+<p>Otsi linna praeguseid ilmatingimusi OpenWeather API kaudu.</p>
+@* Vorm saadab linna nime kontrollerile. API võti jääb serverisse. *@
+<form asp-controller="OpenWeather" asp-action="Index" method="get" class="d-flex gap-2 mb-4">
+    <label for="city" class="visually-hidden">Linna nimi</label>
+    <input id="city" name="city" value="@Model.City" class="form-control" placeholder="Näiteks Tallinn või Tartu,EE" maxlength="100" required />
+    <button type="submit" class="btn btn-primary">Vaata ilma</button>
+</form>
+
+@if (ViewBag.Error != null)
+{
+    <div class="alert alert-danger" role="alert">@ViewBag.Error</div>
+}
+else if (Model.Weather?.Main != null)
+{
+    var weather = Model.Weather;
+    <div class="card mb-4">
+        <div class="card-body">
+            <h2>@weather.Name, @weather.Sys?.Country</h2>
+            @foreach (var condition in weather.Weather)
+            {
+                <p>@condition.Description</p>
+            }
+            <dl class="row mb-0">
+                <dt class="col-sm-4">Temperatuur</dt><dd class="col-sm-8">@weather.Main.Temp.ToString("0.0") °C</dd>
+                <dt class="col-sm-4">Tundub nagu</dt><dd class="col-sm-8">@weather.Main.FeelsLike.ToString("0.0") °C</dd>
+                <dt class="col-sm-4">Õhuniiskus</dt><dd class="col-sm-8">@weather.Main.Humidity %</dd>
+                <dt class="col-sm-4">Õhurõhk</dt><dd class="col-sm-8">@weather.Main.Pressure hPa</dd>
+                @if (weather.Wind != null)
+                {
+                    <dt class="col-sm-4">Tuule kiirus</dt><dd class="col-sm-8">@weather.Wind.Speed.ToString("0.0") m/s</dd>
+                }
+            </dl>
+        </div>
+    </div>
+}
+<p class="text-muted small">Andmed: <a href="https://openweathermap.org/">OpenWeather</a>. Kuvatakse praegune ilm.</p>

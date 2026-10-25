@@ -19,6 +19,9 @@ namespace TARge25Shop
             builder.Services.AddHttpClient<IChuckNorrisServices, ChuckNorrisServices>();
             // Registreerime Cocktail API teenuse ja HttpClienti DI konteineris.
             builder.Services.AddHttpClient<ICocktailServices, CocktailServices>();
+            // URL sisaldab API võtit, seega selle kliendi päringuid ei logita.
+            builder.Services.AddHttpClient<IOpenWeatherServices, OpenWeatherServices>(client =>
+                client.Timeout = TimeSpan.FromSeconds(15)).RemoveAllLoggers();
 
             // Ühendusstring määrab nii SQL Serveri eksemplari kui ka andmebaasi nime.
             var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
