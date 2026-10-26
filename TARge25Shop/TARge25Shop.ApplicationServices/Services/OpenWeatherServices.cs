@@ -3,6 +3,7 @@ using System.Text.Json;
 using TARge25Shop.Core.Dto;
 using TARge25Shop.Core.ServiceInterface;
 
+//See klass teeb HTTP päringu OpenWeather API-le ja saab ilmaandmed JSON-formaadis.
 namespace TARge25Shop.ApplicationServices.Services
 {
     public class OpenWeatherServices : IOpenWeatherServices

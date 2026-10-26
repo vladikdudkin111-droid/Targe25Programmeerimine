@@ -4,6 +4,7 @@ using System.Text.Json;
 using TARge25Shop.Core.ServiceInterface;
 using TARge25Shop.Models.OpenWeather;
 
+//Controller saab kasutajalt linna nime, kutsub Service meetodit ja saadab andmed vaatesse.
 namespace TARge25Shop.Controllers
 {
     public class OpenWeatherController : Controller
