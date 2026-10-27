@@ -39,7 +39,8 @@
             @* Kuupäevad määrab teenus automaatselt. *@
             <div class="mb-3">
                 <label asp-for="Files" class="form-label"></label>
-                <input asp-for="Files" type="file" multiple accept=".jpg,.jpeg,.png,.gif,.webp" class="form-control" aria-describedby="image-help" />
+                @* Piltide lisamine on valikuline; failide sisu ja mahtu kontrollib server. *@
+                <input asp-for="Files" type="file" multiple accept=".jpg,.jpeg,.png,.gif,.webp" class="form-control" aria-describedby="image-help" data-val="false" />
                 @* Files seob failid ViewModeliga; multiple lubab mitu faili. accept piirab valikut brauseris, kuid teenus kontrollib failid serveris uuesti. *@
                 <div id="image-help" class="form-text">JPG, PNG, GIF or WebP. Up to 10 images per upload, 5 MB each, 20 MB total. Existing images are kept.</div>
                 <span asp-validation-for="Files" class="text-danger"></span>
