@@ -56,4 +56,30 @@ public sealed class KindergartenExtraTests : BrowserTestBase
         page.ReloadIndex();
         Assert.Empty(page.IdsWithName(group.GroupName));
     }
+    /// <summary>
+    /// Loob kaks sama nimega rühma ja kontrollib ainult valitud ID-ga rühma kustutamist.
+    /// </summary>
+    [Fact, Trait("Scenario", "Extra")]
+    public void Should_KeepOtherGroup_WhenDeletingOneOfTwoGroupsWithSameName()
+    {
+        var page = new KindergartenPage(Driver, BaseAddress);
+        var first = NewGroup();
+        var second = first with { ChildrenCount = 21, TeacherName = "Anneli Saar" };
+        var firstId = page.Create(first);
+        var secondId = page.Create(second);
+        Assert.NotEqual(firstId, secondId);
+        Assert.Equal(2, page.IdsWithName(first.GroupName).Length);
+
+        page.OpenDelete(firstId);
+        Assert.Equal(firstId.ToString(), page.Details()["Id"]);
+        page.Save();
+        page.ReloadIndex();
+
+        Assert.False(page.Contains(firstId));
+        Assert.Equal(secondId, Assert.Single(page.IdsWithName(first.GroupName)));
+        Assert.Equal(new[] { second.GroupName, "21", second.KindergartenName, "Anneli Saar" }, page.IndexValues(secondId));
+        page.OpenDetails(secondId);
+        Assert.Equal(secondId.ToString(), page.Details()["Id"]);
+        Assert.Equal("Anneli Saar", page.Details()["Teacher name"]);
+    }
 }
