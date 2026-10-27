@@ -81,4 +81,37 @@ public sealed class KindergartenFrontendTests : BrowserTestBase
         Assert.Equal(changed.TeacherName, details["Teacher name"]);
         Assert.Equal(createdAt, details["Created at"]);
     }
+    /// <summary>
+    /// Loob rühma, vaatab ja muudab sama kirjet ning kontrollib selle puudumist pärast kustutamist.
+    /// </summary>
+    [Fact]
+    public void Should_DeleteTheSameGroup_AfterCreatingViewingAndUpdatingIt()
+    {
+        var page = new KindergartenPage(Driver, BaseAddress);
+        var group = NewGroup();
+        var id = page.Create(group);
+        page.OpenDetails(id);
+        Assert.Equal(id.ToString(), page.Details()["Id"]);
+        Assert.Equal(group.GroupName, page.Details()["Group name"]);
+        page.BackToList();
+        var changed = group with { TeacherName = "Mari Kask", ChildrenCount = 19 };
+        page.OpenUpdate(id);
+        page.FillForm(changed);
+        page.Save();
+        page.OpenDetails(id);
+        var details = page.Details();
+        Assert.Equal(id.ToString(), details["Id"]);
+        Assert.Equal("Mari Kask", details["Teacher name"]);
+        Assert.Equal("19", details["Children count"]);
+        page.BackToList();
+
+        page.OpenDelete(id);
+        Assert.Equal(id.ToString(), page.Details()["Id"]);
+        Assert.Equal(group.GroupName, page.Details()["Group name"]);
+        page.Save();
+        page.ReloadIndex();
+
+        Assert.False(page.Contains(id));
+        Assert.Empty(page.IdsWithName(group.GroupName));
+    }
 }
