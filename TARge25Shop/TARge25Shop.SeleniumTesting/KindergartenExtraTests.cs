@@ -35,4 +35,25 @@ public sealed class KindergartenExtraTests : BrowserTestBase
         Assert.Equal(original.KindergartenName, page.FormValue("KindergartenName"));
         Assert.Equal(original.TeacherName, page.FormValue("TeacherName"));
     }
+    /// <summary>
+    /// Jätab õpetaja nime tühjaks ja kontrollib veateadet ning rühma salvestamata jäämist.
+    /// </summary>
+    [Fact, Trait("Scenario", "Extra")]
+    public void Should_ShowValidationError_WithoutCreatingGroup_WhenTeacherNameIsEmpty()
+    {
+        var page = new KindergartenPage(Driver, BaseAddress);
+        var group = NewGroup() with { TeacherName = "" };
+        page.OpenIndex();
+        page.OpenCreate();
+        page.FillForm(group);
+
+        page.Submit();
+
+        Assert.Equal("Õpetaja nimi on kohustuslik.", page.ValidationMessage("TeacherName"));
+        Assert.Equal(group.GroupName, page.FormValue("GroupName"));
+        Assert.Equal(group.KindergartenName, page.FormValue("KindergartenName"));
+        page.BackToList();
+        page.ReloadIndex();
+        Assert.Empty(page.IdsWithName(group.GroupName));
+    }
 }
