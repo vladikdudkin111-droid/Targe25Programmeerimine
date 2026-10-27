@@ -116,8 +116,18 @@ public sealed class KindergartenPage(IWebDriver driver, Uri baseAddress)
     private void WaitForHeading(string text) =>
         _wait.Until(browser => browser.FindElement(By.CssSelector("main h1")).Text == text);
 
-    private void WaitForIndex() => _wait.Until(browser =>
-        browser.FindElements(By.CssSelector("main table tbody")).Count == 1);
+    private void WaitForIndex()
+    {
+        try
+        {
+            _wait.Until(browser => browser.FindElements(By.CssSelector("main table tbody")).Count == 1);
+        }
+        catch (WebDriverTimeoutException exception)
+        {
+            var text = driver.FindElement(By.TagName("body")).Text;
+            throw new WebDriverTimeoutException($"Rühmade nimekiri ei avanenud: {driver.Url}\n{text}", exception);
+        }
+    }
 
     private void WaitForForm() => _wait.Until(browser => browser.FindElement(By.Id("GroupName")).Displayed);
 }
