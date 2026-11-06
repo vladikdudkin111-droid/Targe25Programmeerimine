@@ -71,7 +71,7 @@ namespace TARge25Shop.Controllers
             try
             {
                 var dto = ToDto(vm);
-                dto.Files = await ReadFilesAsync(vm.Files);
+                dto.Files = await ReadFilesAsync(vm.Files ?? []);
                 // Loeme vormi failidest baidid DTO-sse; teenus saab need kontrollida ja koos ankeediga salvestada.
                 await _kindergartenServices.Create(dto);
             }
@@ -157,7 +157,7 @@ namespace TARge25Shop.Controllers
             try
             {
                 var dto = ToDto(vm);
-                dto.Files = await ReadFilesAsync(vm.Files);
+                dto.Files = await ReadFilesAsync(vm.Files ?? []);
                 // Loeme vormi failidest baidid DTO-sse; teenus saab need kontrollida ja koos ankeediga salvestada.
                 var updated = await _kindergartenServices.Update(dto);
                 if (updated == null)

@@ -1,0 +1,116 @@
+﻿using OpenQA.Selenium;
+using OpenQA.Selenium.Chrome;
+using Xunit;
+
+namespace TARge25Shop.KindergartenTest;
+
+public class KindergartenUiTests : IDisposable
+{
+    private const string ListUrl = "http://localhost:5277/Kindergarten";
+    private readonly ChromeDriver _browser = new();
+
+    /// <summary>
+    /// Loob rühma ja kontrollib, et nimekirjas kuvatakse kõik sisestatud andmed.
+    /// </summary>
+    [Fact]
+    public void CreateGroupShowsSavedDataInList()
+    {
+        string name = NewName();
+
+        CreateGroup(name);
+
+        AssertRow(name, "12", "Metsatark", "Mari");
+        DeleteGroup(name);
+    }
+
+    private static string NewName() => $"UI-test-{Guid.NewGuid():N}";
+
+    private void OpenCreateForm()
+    {
+        _browser.Navigate().GoToUrl(ListUrl);
+        ClickLink("Create");
+    }
+
+    private void CreateGroup(string name, string teacher = "Mari")
+    {
+        OpenCreateForm();
+        FillForm(name, "12", "Metsatark", teacher);
+        SubmitForm();
+        var tables = _browser.FindElements(By.CssSelector("main table"));
+        var errors = _browser.FindElements(
+                By.CssSelector("main .field-validation-error, main .validation-summary-errors"))
+            .Select(element => element.Text)
+            .Where(message => !string.IsNullOrWhiteSpace(message));
+
+        Assert.True(
+            tables.Count > 0,
+            $"После сохранения список не открылся. URL: {_browser.Url}. " +
+            $"Ошибки формы: {string.Join(" | ", errors)}");
+    }
+
+    private void FillForm(string name, string count, string kindergarten, string teacher)
+    {
+        Fill("GroupName", name);
+        Fill("ChildrenCount", count);
+        Fill("KindergartenName", kindergarten);
+        Fill("TeacherName", teacher);
+    }
+
+    private void Fill(string fieldName, string value)
+    {
+        var input = Field(fieldName);
+        input.Clear();
+
+        if (value.Length > 0)
+        {
+            input.SendKeys(value);
+        }
+    }
+
+    private IWebElement Field(string name) =>
+        _browser.FindElement(By.Name(name));
+
+    private void ClickLink(string text) =>
+        _browser.FindElement(By.LinkText(text)).Click();
+
+    private void SubmitForm() =>
+        _browser.FindElement(By.CssSelector("main form button[type='submit']")).Click();
+
+    private IWebElement? FindRow(string name, string? teacher = null)
+    {
+        return _browser.FindElements(By.CssSelector("main table tbody tr"))
+            .SingleOrDefault(row =>
+            {
+                var cells = row.FindElements(By.TagName("td"));
+                return cells[1].Text == name &&
+                    (teacher == null || cells[4].Text == teacher);
+            });
+    }
+
+    private void AssertRow(string name, string count, string kindergarten, string teacher)
+    {
+        var row = FindRow(name);
+        Assert.NotNull(row);
+
+        var cells = row.FindElements(By.TagName("td"));
+        Assert.Equal(name, cells[1].Text);
+        Assert.Equal(count, cells[2].Text);
+        Assert.Equal(kindergarten, cells[3].Text);
+        Assert.Equal(teacher, cells[4].Text);
+    }
+
+    private void OpenGroupPage(string name, string link, string? teacher = null)
+    {
+        var row = FindRow(name, teacher);
+        Assert.NotNull(row);
+        row.FindElement(By.LinkText(link)).Click();
+    }
+
+    private void DeleteGroup(string name, string? teacher = null)
+    {
+        OpenGroupPage(name, "Delete", teacher);
+        SubmitForm();
+    }
+
+    public void Dispose() => _browser.Dispose();
+}

@@ -27,7 +27,7 @@ namespace TARge25Shop.Models.Kindergarten
         public string TeacherName { get; set; } = string.Empty;
 
         [Display(Name = "Add images")]
-        public List<IFormFile> Files { get; set; } = [];
+        public List<IFormFile>? Files { get; set; }
 
         public KindergartenImagesViewModel Gallery { get; set; } = new();
     }
