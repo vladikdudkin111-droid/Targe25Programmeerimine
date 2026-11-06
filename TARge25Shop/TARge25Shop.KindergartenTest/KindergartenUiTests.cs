@@ -25,6 +25,59 @@ public class KindergartenUiTests : IDisposable
 
     private static string NewName() => $"UI-test-{Guid.NewGuid():N}";
 
+    /// <summary>
+    /// Avab loodud rühma detailvaate ja kontrollib rühma ID-d ning kõiki sisestatud andmeid.
+    /// </summary>
+    [Fact]
+    public void DetailsShowsCreatedGroup()
+    {
+        string name = NewName();
+        CreateGroup(name);
+
+        OpenGroupPage(name, "Details");
+
+        Assert.True(Guid.TryParse(DetailsValue("Id"), out Guid id));
+        Assert.NotEqual(Guid.Empty, id);
+        Assert.Equal(name, DetailsValue("Group name"));
+        Assert.Equal("12", DetailsValue("Children count"));
+        Assert.Equal("Metsatark", DetailsValue("Kindergarten name"));
+        Assert.Equal("Mari", DetailsValue("Teacher name"));
+
+        ClickLink("Back to list");
+        DeleteGroup(name);
+    }
+
+    /// <summary>
+    /// Muudab rühma andmeid ja kontrollib, et pärast salvestamist jääb rühma ID samaks.
+    /// </summary>
+    [Fact]
+    public void UpdateChangesDataOfSameGroup()
+    {
+        string name = NewName();
+        CreateGroup(name);
+        OpenGroupPage(name, "Details");
+
+        string id = DetailsValue("Id");
+        ClickLink("Update");
+        Assert.Equal(name, Field("GroupName").GetDomProperty("value"));
+
+        string updatedName = name + "-muudetud";
+        FillForm(updatedName, "16", "Männik", "Kati");
+        SubmitForm();
+
+        Assert.Null(FindRow(name));
+        AssertRow(updatedName, "16", "Männik", "Kati");
+        OpenGroupPage(updatedName, "Details");
+        Assert.Equal(id, DetailsValue("Id"));
+
+        ClickLink("Back to list");
+        DeleteGroup(updatedName);
+    }
+
+    private string DetailsValue(string label) =>
+        _browser.FindElement(By.XPath(
+            $"//main//dt[normalize-space(.)='{label}']/following-sibling::dd[1]")).Text;
+
     private void OpenCreateForm()
     {
         _browser.Navigate().GoToUrl(ListUrl);
