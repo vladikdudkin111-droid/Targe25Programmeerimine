@@ -52,6 +52,23 @@ public class KindergartenUiTests : IDisposable
         Assert.Null(FindRow(updatedName));
     }
 
+    /// <summary>
+    /// Jätab rühma nime tühjaks ja kontrollib, et vorm kuvab veateate.
+    /// </summary>
+    [Fact]
+    public void EmptyGroupNameShowsValidationError()
+    {
+        OpenCreateForm();
+        FillForm("", "12", "Metsatark", "Mari");
+
+        SubmitForm();
+
+        var error = _browser.FindElement(
+            By.CssSelector("[data-valmsg-for='GroupName']"));
+        Assert.True(error.Displayed);
+        Assert.Equal("Rühma nimi on kohustuslik.", error.Text);
+    }
+
     private static string NewName() => $"UI-test-{Guid.NewGuid():N}";
 
     /// <summary>
