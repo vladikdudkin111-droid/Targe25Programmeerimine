@@ -69,6 +69,25 @@ public class KindergartenUiTests : IDisposable
         Assert.Equal("Rühma nimi on kohustuslik.", error.Text);
     }
 
+    /// <summary>
+    /// Sisestab negatiivse laste arvu ja kontrollib, et rühma ei salvestata.
+    /// </summary>
+    [Fact]
+    public void NegativeChildrenCountPreventsSaving()
+    {
+        string name = NewName();
+        OpenCreateForm();
+        FillForm(name, "-1", "Metsatark", "Mari");
+
+        SubmitForm();
+
+        Assert.Equal("-1", Field("ChildrenCount").GetDomProperty("value"));
+        Assert.NotEmpty(Field("ChildrenCount").GetDomProperty("validationMessage") ?? "");
+
+        ClickLink("Back to list");
+        Assert.Null(FindRow(name));
+    }
+
     private static string NewName() => $"UI-test-{Guid.NewGuid():N}";
 
     /// <summary>
