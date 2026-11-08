@@ -23,6 +23,35 @@ public class KindergartenUiTests : IDisposable
         DeleteGroup(name);
     }
 
+    /// <summary>
+    /// Loob rühma, vaatab ja muudab seda ning kontrollib, et sama ID-ga rühm
+    /// kaob pärast kustutamist nimekirjast.
+    /// </summary>
+    [Fact]
+    public void DeleteRemovesGroupAfterUpdate()
+    {
+        string name = NewName();
+        CreateGroup(name);
+        OpenGroupPage(name, "Details");
+
+        string id = DetailsValue("Id");
+        Assert.Equal(name, DetailsValue("Group name"));
+
+        ClickLink("Update");
+        string updatedName = name + "-muudetud";
+        FillForm(updatedName, "16", "Männik", "Kati");
+        SubmitForm();
+
+        AssertRow(updatedName, "16", "Männik", "Kati");
+        OpenGroupPage(updatedName, "Delete");
+        Assert.Equal(id, DetailsValue("Id"));
+        Assert.Equal(updatedName, DetailsValue("Group name"));
+        SubmitForm();
+
+        _browser.Navigate().Refresh();
+        Assert.Null(FindRow(updatedName));
+    }
+
     private static string NewName() => $"UI-test-{Guid.NewGuid():N}";
 
     /// <summary>
