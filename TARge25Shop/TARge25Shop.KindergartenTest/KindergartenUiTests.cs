@@ -88,6 +88,25 @@ public class KindergartenUiTests : IDisposable
         Assert.Null(FindRow(name));
     }
 
+    /// <summary>
+    /// Lahkub muutmisvormilt salvestamata ja kontrollib, et algsed andmed jäävad alles.
+    /// </summary>
+    [Fact]
+    public void CancelUpdateKeepsOriginalData()
+    {
+        string name = NewName();
+        CreateGroup(name);
+        OpenGroupPage(name, "Update");
+
+        string unsavedName = name + "-salvestamata";
+        FillForm(unsavedName, "20", "Männik", "Kati");
+        ClickLink("Back to list");
+
+        Assert.Null(FindRow(unsavedName));
+        AssertRow(name, "12", "Metsatark", "Mari");
+        DeleteGroup(name);
+    }
+
     private static string NewName() => $"UI-test-{Guid.NewGuid():N}";
 
     /// <summary>
