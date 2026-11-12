@@ -107,6 +107,26 @@ public class KindergartenUiTests : IDisposable
         DeleteGroup(name);
     }
 
+    /// <summary>
+    /// Loob kaks sama nimega rühma ja kontrollib, et kustutatakse ainult valitud rühm.
+    /// </summary>
+    [Fact]
+    public void DeleteKeepsOtherGroupWithSameName()
+    {
+        string name = NewName();
+        CreateGroup(name, "Mari");
+        CreateGroup(name, "Kati");
+
+        AssertRow(name, "12", "Metsatark", "Mari");
+        AssertRow(name, "12", "Metsatark", "Kati");
+
+        DeleteGroup(name, "Mari");
+
+        Assert.Null(FindRow(name, "Mari"));
+        AssertRow(name, "12", "Metsatark", "Kati");
+        DeleteGroup(name, "Kati");
+    }
+
     private static string NewName() => $"UI-test-{Guid.NewGuid():N}";
 
     /// <summary>
@@ -226,7 +246,7 @@ public class KindergartenUiTests : IDisposable
 
     private void AssertRow(string name, string count, string kindergarten, string teacher)
     {
-        var row = FindRow(name);
+        var row = FindRow(name, teacher);
         Assert.NotNull(row);
 
         var cells = row.FindElements(By.TagName("td"));
